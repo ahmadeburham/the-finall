@@ -17,6 +17,7 @@ import arabic_ocr as ao
 import face_match_top4 as fm
 import feature_pipeline as fp
 import template_fields as tf
+import liveness_gate as lg
 
 
 def ensure_dir(path: Path) -> None:
@@ -83,6 +84,8 @@ def copy_code_snapshot(run_dir: Path) -> None:
         "template_fields.py",
         "full_id_pipeline.py",
         "debug_full_id_pipeline.py",
+        "liveness_gate.py",
+        "batch_test_runner.py",
         "id_template_config.json",
     ]:
         p = Path(name)
@@ -319,7 +322,17 @@ def run_single_ocr_field_debug(field_name: str, crop_bgr: np.ndarray, out_dir: P
     ensure_dir(out_dir)
     cv2.imwrite(str(out_dir / "original.png"), crop_bgr)
 
-    if field_name in {"name", "address", "back_text", "middle_text", "top_number", "expiry_date"}:
+    if field_name == "expiry_date":
+        for idx, variant in enumerate(ao.preprocess_text_block(crop_bgr)):
+            cv2.imwrite(str(out_dir / f"variant_{idx:02d}.png"), variant)
+        best_info = ao.debug_expiry_date_from_crop(crop_bgr)
+        for variant in best_info.get("variants", []):
+            save_json(out_dir / f"variant_{variant['variant_index']:02d}.json", variant)
+        save_json(out_dir / "best.json", best_info)
+        logger.log(f"ocr field {field_name}: best_variant={best_info.get('best_variant_index')}, text={best_info.get('best_text', '')}")
+        return best_info
+
+    if field_name in {"name", "address", "back_text", "middle_text", "top_number"}:
         variants = ao.preprocess_text_block(crop_bgr)
         score_fn = ao._score_text
         post_text_fn = ao.merge_lines
@@ -394,6 +407,19 @@ def run_ocr_debug(front_crops: Dict[str, np.ndarray], back_crops: Dict[str, np.n
     return fields
 
 
+def run_liveness_debug(selfie_path: str, detector_backend: str, enforce_detection: bool, out_dir: Path, logger: RunLogger):
+    logger.log("liveness stage started")
+    ensure_dir(out_dir)
+    result = lg.check_selfie_liveness(
+        selfie_path=selfie_path,
+        detector_backend=detector_backend,
+        enforce_detection=enforce_detection,
+    )
+    save_json(out_dir / "result.json", result)
+    logger.log(f"liveness stage finished, passed={result.get('passed', False)}")
+    return bool(result.get("passed", False)), result
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--selfie", required=True)
@@ -453,11 +479,14 @@ def main():
     result = {
         "card_valid": False,
         "face_match": None,
+        "liveness_passed": None,
+        "overall_passed": False,
         "text": {
             "name": "",
             "address": "",
             "id_number": "",
             "birth_date": "",
+            "expiry_date": "",
             "front_full_text": "",
             "back_full_text": "",
         },
@@ -534,10 +563,6 @@ def main():
         result["face_match"] = bool(face_match)
         save_json(run_dir / "03_face_match" / "stage_summary.json", {"face_match": face_match, "logs": face_logs})
 
-        if not face_match:
-            save_json(run_dir / "final_result.json", result)
-            return
-
         fields = run_ocr_debug(
             front_crops=front_artifacts.get("crops", {}),
             back_crops=back_artifacts.get("crops", {}),
@@ -550,9 +575,21 @@ def main():
             "address": fields.get("address", ""),
             "id_number": fields.get("id_number", ""),
             "birth_date": fields.get("birth_date", ""),
+            "expiry_date": fields.get("expiry_date", ""),
             "front_full_text": fields.get("front_full_text", ""),
             "back_full_text": fields.get("back_full_text", ""),
         }
+
+        liveness_passed, liveness_result = run_liveness_debug(
+            selfie_path=args.selfie,
+            detector_backend=args.detector_backend,
+            enforce_detection=args.enforce_detection,
+            out_dir=run_dir / "05_liveness",
+            logger=logger,
+        )
+        result["liveness_passed"] = bool(liveness_passed)
+        result["liveness"] = liveness_result
+        result["overall_passed"] = bool(result["card_valid"] and result["face_match"] and result["liveness_passed"])
 
         save_json(run_dir / "final_result.json", result)
         logger.log("debug run finished")

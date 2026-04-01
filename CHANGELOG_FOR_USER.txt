@@ -1,0 +1,16 @@
+Patched files included in this bundle:
+- arabic_ocr.py
+- full_id_pipeline.py
+- debug_full_id_pipeline.py
+- run_fields_only.py
+- liveness_gate.py (new)
+- batch_test_runner.py (new)
+- template_fields.py (unchanged, included for compatibility)
+- feature_pipeline.py (unchanged, included for compatibility)
+- face_match_top4.py (unchanged, included for compatibility)
+- id_template_config.json (unchanged)
+
+Important note:
+- I did NOT change the ROI coordinates in id_template_config.json because the exact expiry-line position cannot be derived safely from the repository alone.
+- The OCR patch now extracts expiry_date from the labeled Arabic line "البطاقه ساريه حتي" inside the existing back crop.
+- If you later add a dedicated back OCR crop named "expiry_date" in id_template_config.json, the code will use it automatically.

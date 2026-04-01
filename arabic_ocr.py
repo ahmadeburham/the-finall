@@ -11,9 +11,11 @@ import numpy as np
 from paddleocr import PaddleOCR
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
-
 _OCR = None
 AR_NUM_MAP = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
+TO_AR_NUM_MAP = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
+EXPIRY_LABEL = "البطاقه ساريه حتي"
+EXPIRY_LABEL_TOKENS = ["البطاقه", "ساريه", "حتي"]
 
 
 def build_ocr():
@@ -41,7 +43,6 @@ def extract_lines_from_predict_result(res_obj):
     data = res_obj
     if isinstance(data, dict) and "res" in data:
         data = data["res"]
-
     texts = data.get("rec_texts", []) or []
     scores = data.get("rec_scores", []) or []
     polys = data.get("rec_polys", []) or data.get("dt_polys", []) or []
@@ -51,21 +52,18 @@ def extract_lines_from_predict_result(res_obj):
         text = str(text).strip()
         if not text:
             continue
-
         score = None
         if i < len(scores):
             try:
                 score = float(scores[i])
             except Exception:
                 score = None
-
         box = [[0, 0], [0, 0], [0, 0], [0, 0]]
         if i < len(polys):
             try:
                 box = [[int(round(p[0])), int(round(p[1]))] for p in polys[i]]
             except Exception:
                 pass
-
         lines.append({"text": text, "score": score, "box": box})
 
     lines.sort(key=sort_key)
@@ -80,8 +78,29 @@ def normalize_arabic_text(text: str) -> str:
     return text
 
 
+def normalize_arabic_for_match(text: str) -> str:
+    text = normalize_arabic_text(text)
+    text = normalize_digits(text)
+    text = (
+        text.replace("أ", "ا")
+        .replace("إ", "ا")
+        .replace("آ", "ا")
+        .replace("ة", "ه")
+        .replace("ى", "ي")
+        .replace("ؤ", "و")
+        .replace("ئ", "ي")
+    )
+    text = re.sub(r"[^\u0600-\u06FF0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
 def normalize_digits(text: str) -> str:
     return text.translate(AR_NUM_MAP)
+
+
+def to_arabic_digits(text: str) -> str:
+    return normalize_digits(text).translate(TO_AR_NUM_MAP)
 
 
 def only_digits(text: str) -> str:
@@ -95,12 +114,15 @@ def _resize_up(image_bgr: np.ndarray, target_short: int = 320) -> np.ndarray:
         return image_bgr
     scale = target_short / max(short_side, 1)
     scale = min(scale, 4.0)
-    return cv2.resize(image_bgr, (max(1, int(round(w * scale))), max(1, int(round(h * scale)))), interpolation=cv2.INTER_CUBIC)
+    return cv2.resize(
+        image_bgr,
+        (max(1, int(round(w * scale))), max(1, int(round(h * scale)))),
+        interpolation=cv2.INTER_CUBIC,
+    )
 
 
 def preprocess_text_block(image_bgr: np.ndarray) -> List[np.ndarray]:
     variants = []
-
     up = _resize_up(image_bgr, target_short=360)
     variants.append(up)
 
@@ -114,13 +136,11 @@ def preprocess_text_block(image_bgr: np.ndarray) -> List[np.ndarray]:
 
     bilateral = cv2.bilateralFilter(gray, 7, 50, 50)
     variants.append(cv2.cvtColor(bilateral, cv2.COLOR_GRAY2BGR))
-
     return variants
 
 
 def preprocess_numeric_block(image_bgr: np.ndarray) -> List[np.ndarray]:
     variants = []
-
     up = _resize_up(image_bgr, target_short=260)
     gray = cv2.cvtColor(up, cv2.COLOR_BGR2GRAY)
     gray = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8)).apply(gray)
@@ -141,7 +161,6 @@ def preprocess_numeric_block(image_bgr: np.ndarray) -> List[np.ndarray]:
 
     adap_inv = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 31, 11)
     variants.append(cv2.cvtColor(adap_inv, cv2.COLOR_GRAY2BGR))
-
     return variants
 
 
@@ -153,6 +172,7 @@ def _ocr_lines_from_image(image_bgr: np.ndarray) -> List[dict]:
             tmp_name = tmp.name
         cv2.imwrite(tmp_name, image_bgr)
         results = list(ocr.predict(tmp_name))
+
         lines = []
         for i, res in enumerate(results):
             data = None
@@ -174,6 +194,7 @@ def _ocr_lines_from_image(image_bgr: np.ndarray) -> List[dict]:
 
             if data is not None:
                 lines.extend(extract_lines_from_predict_result(data))
+
         lines.sort(key=sort_key)
         return lines
     finally:
@@ -195,14 +216,16 @@ def _extract_digit_candidates(lines: List[dict]) -> List[str]:
     joined = normalize_digits(" ".join(x["text"] for x in lines))
     joined = joined.replace("/", " ").replace("-", " ").replace(".", " ").replace("_", " ")
     parts = re.findall(r"\d+", joined)
+
     out = []
     for p in parts:
         if p:
             out.append(p)
+
     merged = only_digits(joined)
     if merged:
         out.append(merged)
-    # dedupe preserving order
+
     seen = set()
     uniq = []
     for x in out:
@@ -292,6 +315,162 @@ def infer_birth_date_from_id(id_number: str) -> str:
     return f"{year:04d}{mm}{dd}"
 
 
+def is_valid_yyyymmdd(digits: str) -> bool:
+    digits = only_digits(digits)
+    if len(digits) != 8:
+        return False
+    year = int(digits[:4])
+    month = int(digits[4:6])
+    day = int(digits[6:8])
+    if year < 1900 or year > 2100:
+        return False
+    if month < 1 or month > 12:
+        return False
+    if day < 1 or day > 31:
+        return False
+    return True
+
+
+def _extract_yyyymmdd_ascii(text: str) -> str:
+    text = normalize_digits(text)
+    patterns = [
+        r"(\d{4})\s*[/\\\-.]\s*(\d{2})\s*[/\\\-.]\s*(\d{2})",
+        r"(\d{4})\s*(\d{2})\s*(\d{2})",
+    ]
+    for pattern in patterns:
+        m = re.search(pattern, text)
+        if m:
+            value = "".join(m.groups())
+            if is_valid_yyyymmdd(value):
+                return value
+    digits = only_digits(text)
+    if len(digits) >= 8:
+        for i in range(0, len(digits) - 7):
+            chunk = digits[i:i + 8]
+            if is_valid_yyyymmdd(chunk):
+                return chunk
+    return ""
+
+
+def _line_height(line: dict) -> float:
+    box = line.get("box") or []
+    if not box:
+        return 0.0
+    ys = [p[1] for p in box]
+    return float(max(ys) - min(ys))
+
+
+def _line_center_y(line: dict) -> float:
+    box = line.get("box") or []
+    if not box:
+        return 0.0
+    ys = [p[1] for p in box]
+    return float(sum(ys) / len(ys))
+
+
+def _expiry_label_score(text: str) -> int:
+    norm = normalize_arabic_for_match(text)
+    score = 0
+    for token in EXPIRY_LABEL_TOKENS:
+        if token in norm:
+            score += 1
+    return score
+
+
+def _lines_for_candidate(lines: List[dict], idx: int) -> List[dict]:
+    selected = [lines[idx]]
+    current_y = _line_center_y(lines[idx])
+    current_h = max(_line_height(lines[idx]), 1.0)
+    for j in range(idx + 1, min(idx + 3, len(lines))):
+        next_y = _line_center_y(lines[j])
+        if abs(next_y - current_y) <= current_h * 1.3:
+            selected.append(lines[j])
+        else:
+            break
+    return selected
+
+
+def extract_expiry_date_from_lines(lines: List[dict]) -> Dict:
+    best = {
+        "matched": False,
+        "expiry_date_ascii": "",
+        "expiry_date": "",
+        "matched_text": "",
+        "matched_lines": [],
+        "label_score": 0,
+    }
+    for idx, line in enumerate(lines):
+        label_score = _expiry_label_score(line.get("text", ""))
+        if label_score <= 0:
+            continue
+        candidate_lines = _lines_for_candidate(lines, idx)
+        candidate_text = merge_lines(candidate_lines)
+        expiry_ascii = _extract_yyyymmdd_ascii(candidate_text)
+        candidate = {
+            "matched": label_score >= 2 and bool(expiry_ascii),
+            "expiry_date_ascii": expiry_ascii,
+            "expiry_date": to_arabic_digits(expiry_ascii) if expiry_ascii else "",
+            "matched_text": candidate_text,
+            "matched_lines": candidate_lines,
+            "label_score": label_score,
+        }
+        if (candidate["matched"], candidate["label_score"], len(candidate["expiry_date_ascii"])) > (
+            best["matched"],
+            best["label_score"],
+            len(best["expiry_date_ascii"]),
+        ):
+            best = candidate
+    return best
+
+
+def debug_expiry_date_from_crop(image_bgr: np.ndarray) -> Dict:
+    best_info = {
+        "field_name": "expiry_date",
+        "best_variant_index": -1,
+        "best_score": -1e18,
+        "best_text": "",
+        "best_lines": [],
+        "best_matched_text": "",
+        "variants": [],
+    }
+
+    for idx, variant in enumerate(preprocess_text_block(image_bgr)):
+        lines = _ocr_lines_from_image(variant)
+        parsed = extract_expiry_date_from_lines(lines)
+        avg_conf = float(np.mean([x["score"] for x in lines if isinstance(x.get("score"), (int, float))])) if lines else 0.0
+        score = float(parsed["matched"]) * 100.0 + parsed["label_score"] * 10.0 + len(parsed["expiry_date_ascii"]) + avg_conf * 5.0
+        variant_info = {
+            "variant_index": idx,
+            "score": score,
+            "text": parsed["expiry_date"],
+            "matched_text": parsed["matched_text"],
+            "matched": parsed["matched"],
+            "label_score": parsed["label_score"],
+            "lines": lines,
+            "matched_lines": parsed["matched_lines"],
+        }
+        best_info["variants"].append(variant_info)
+
+        if score > best_info["best_score"]:
+            best_info["best_variant_index"] = idx
+            best_info["best_score"] = score
+            best_info["best_text"] = parsed["expiry_date"]
+            best_info["best_lines"] = parsed["matched_lines"]
+            best_info["best_matched_text"] = parsed["matched_text"]
+
+    return best_info
+
+
+def _best_expiry_from_crop(image_bgr: np.ndarray) -> Tuple[str, List[dict], int, float]:
+    info = debug_expiry_date_from_crop(image_bgr)
+    return (
+        info.get("best_text", ""),
+        info.get("best_lines", []),
+        int(info.get("best_variant_index", -1)),
+        float(info.get("best_score", -1e18)),
+    )
+
+
 def extract_text_from_image(input_path: str) -> dict:
     path = Path(input_path)
     if not path.exists():
@@ -308,7 +487,6 @@ def extract_text_from_image(input_path: str) -> dict:
 
     lines, _, _ = _best_lines_for_text(image)
     full_text = merge_lines(lines)
-
     return {"full_text": full_text, "lines": lines}
 
 
@@ -318,7 +496,6 @@ def extract_fields_from_crops(front_crops: Dict[str, np.ndarray], back_crops: Di
 
     name_lines, _, _ = _best_lines_for_text(front_crops["name"]) if "name" in front_crops else ([], -1, 0.0)
     address_lines, _, _ = _best_lines_for_text(front_crops["address"]) if "address" in front_crops else ([], -1, 0.0)
-
     id_number, id_lines, _, _ = _best_numeric_from_crop(front_crops["id_number"], prefer_len=14) if "id_number" in front_crops else ("", [], -1, 0.0)
     birth_date, birth_lines, _, _ = _best_numeric_from_crop(front_crops["birth_date"], prefer_len=8) if "birth_date" in front_crops else ("", [], -1, 0.0)
 
@@ -331,18 +508,26 @@ def extract_fields_from_crops(front_crops: Dict[str, np.ndarray], back_crops: Di
     front_full_text = normalize_arabic_text(" ".join(filter(None, [name, address, id_number, birth_date])))
 
     back_full_text_parts = []
+    expiry_date = ""
+    expiry_lines: List[dict] = []
+
     if back_crops:
-        for crop in back_crops.values():
+        for crop_name, crop in back_crops.items():
             lines, _, _ = _best_lines_for_text(crop)
             txt = merge_lines(lines)
             if txt:
                 back_full_text_parts.append(txt)
+
+        expiry_source = back_crops.get("expiry_date") or back_crops.get("back_text")
+        if expiry_source is not None:
+            expiry_date, expiry_lines, _, _ = _best_expiry_from_crop(expiry_source)
 
     return {
         "name": name,
         "address": address,
         "id_number": id_number,
         "birth_date": birth_date,
+        "expiry_date": expiry_date,
         "front_full_text": front_full_text,
         "back_full_text": normalize_arabic_text(" ".join(back_full_text_parts)),
         "raw": {
@@ -350,6 +535,7 @@ def extract_fields_from_crops(front_crops: Dict[str, np.ndarray], back_crops: Di
             "address_lines": address_lines,
             "id_number_lines": id_lines,
             "birth_date_lines": birth_lines,
+            "expiry_date_lines": expiry_lines,
         },
     }
 
@@ -364,7 +550,6 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     result = extract_text_from_image(args.input)
-
     (out_dir / "result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     (out_dir / "full_text.txt").write_text(result["full_text"], encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2))
