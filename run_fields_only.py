@@ -12,7 +12,8 @@ def ensure_parent(path: Path) -> None:
 
 def save_json(path: Path, data: dict) -> None:
     ensure_parent(path)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    payload = ao.prepare_for_json_output(data)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def main():
@@ -39,8 +40,20 @@ def main():
         return_candidates=True,
     )
 
-    front_artifacts = tf.extract_side_artifacts(aligned_front, config, "front")
-    back_artifacts = tf.extract_side_artifacts(aligned_back, config, "back")
+    front_artifacts = tf.extract_side_artifacts(
+        aligned_front,
+        config,
+        "front",
+        subject_image=args.front_image,
+        align_info=front_align_info,
+    )
+    back_artifacts = tf.extract_side_artifacts(
+        aligned_back,
+        config,
+        "back",
+        subject_image=args.back_image,
+        align_info=back_align_info,
+    )
 
     if args.debug_dir:
         tf.save_debug_artifacts(args.debug_dir, "front", front_artifacts)
@@ -66,7 +79,7 @@ def main():
     }
 
     save_json(Path(args.output_json), result)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(json.dumps(ao.prepare_for_json_output(result), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

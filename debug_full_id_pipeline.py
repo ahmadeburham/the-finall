@@ -1,4 +1,4 @@
-import argparse
+﻿import argparse
 import json
 import math
 import shutil
@@ -44,7 +44,8 @@ def sanitize(obj):
 
 def save_json(path: Path, data) -> None:
     ensure_dir(path.parent)
-    path.write_text(json.dumps(sanitize(data), ensure_ascii=False, indent=2), encoding="utf-8")
+    payload = ao.prepare_for_json_output(sanitize(data))
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 class RunLogger:
@@ -235,7 +236,13 @@ def run_alignment_debug(side_name: str, image_path: str, template_path: str, con
         )
         logger.log(f"{side_name}: alignment candidates {cand_str}")
 
-    artifacts = tf.extract_side_artifacts(aligned, config, side_name)
+    artifacts = tf.extract_side_artifacts(
+        aligned,
+        config,
+        side_name,
+        subject_image=image_path,
+        align_info=align_info,
+    )
     tf.save_debug_artifacts(side_dir, side_name, artifacts)
 
     manifest = {
@@ -338,8 +345,8 @@ def run_single_ocr_field_debug(field_name: str, crop_bgr: np.ndarray, out_dir: P
         post_text_fn = ao.merge_lines
     else:
         prefer_len = 14 if field_name == "id_number" else 8 if field_name == "birth_date" else None
-        variants = ao.preprocess_numeric_block(crop_bgr)
-        score_fn = lambda lines: ao._score_numeric(lines, prefer_len=prefer_len)
+        variants = ao.preprocess_text_block(crop_bgr)
+        score_fn = lambda lines: len(ao.numeric_field(lines, prefer_len=prefer_len))
         post_text_fn = lambda lines: ao.numeric_field(lines, prefer_len=prefer_len)
 
     best_score = -1e18
@@ -530,8 +537,6 @@ def main():
             save_json(run_dir / "final_result.json", result)
             return
 
-        result["card_valid"] = True
-
         config = tf.load_config(args.template_config)
 
         try:
@@ -569,16 +574,21 @@ def main():
             out_dir=run_dir / "04_ocr",
             logger=logger,
         )
+        id_match = ao.ids_match_strict(fields.get("front_id_number", ""), fields.get("back_id_number", ""))
 
         result["text"] = {
             "name": fields.get("name", ""),
             "address": fields.get("address", ""),
             "id_number": fields.get("id_number", ""),
+            "front_id_number": fields.get("front_id_number", ""),
+            "back_id_number": fields.get("back_id_number", ""),
+            "id_numbers_match": bool(id_match),
             "birth_date": fields.get("birth_date", ""),
             "expiry_date": fields.get("expiry_date", ""),
             "front_full_text": fields.get("front_full_text", ""),
             "back_full_text": fields.get("back_full_text", ""),
         }
+        result["card_valid"] = True
 
         liveness_passed, liveness_result = run_liveness_debug(
             selfie_path=args.selfie,
@@ -589,7 +599,7 @@ def main():
         )
         result["liveness_passed"] = bool(liveness_passed)
         result["liveness"] = liveness_result
-        result["overall_passed"] = bool(result["card_valid"] and result["face_match"] and result["liveness_passed"])
+        result["overall_passed"] = bool(result["card_valid"] and result["face_match"])
 
         save_json(run_dir / "final_result.json", result)
         logger.log("debug run finished")

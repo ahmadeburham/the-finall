@@ -1,0 +1,8 @@
+{
+  "feature_front": true,
+  "feature_back": false,
+  "alignment": true,
+  "ocr": false,
+  "liveness": false,
+  "face_match": true
+}

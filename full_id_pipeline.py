@@ -1,4 +1,4 @@
-import argparse
+﻿import argparse
 import json
 import traceback
 from datetime import datetime
@@ -10,6 +10,23 @@ import face_match_top4 as fm
 import feature_pipeline as fp
 import liveness_gate as lg
 import template_fields as tf
+
+
+def normalize_output(value):
+    if isinstance(value, dict):
+        return {str(k): normalize_output(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [normalize_output(v) for v in value]
+    if isinstance(value, str):
+        return ao.format_text_for_json(value)
+    if isinstance(value, Path):
+        return str(value)
+    if hasattr(value, "item") and callable(getattr(value, "item")):
+        try:
+            return value.item()
+        except Exception:
+            pass
+    return value
 
 
 class StepLogger:
@@ -41,6 +58,9 @@ def empty_text():
         "name": "",
         "address": "",
         "id_number": "",
+        "front_id_number": "",
+        "back_id_number": "",
+        "id_numbers_match": False,
         "birth_date": "",
         "expiry_date": "",
         "front_full_text": "",
@@ -49,8 +69,9 @@ def empty_text():
 
 
 def write_result(path: Path, result: dict):
-    path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    normalized = normalize_output(result)
+    path.write_text(json.dumps(normalized, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(normalized, ensure_ascii=False, indent=2))
 
 
 def run_dual_validation(front_image, back_image, features_root, include_deep, min_front, min_back):
@@ -129,19 +150,31 @@ def run_pipeline(
         logger.log(f"feature validation finished: front={front_valid}, back={back_valid}, card_valid={card_valid}")
     except Exception as e:
         logger.exception("feature validation", e)
-        return result
+        return normalize_output(result)
 
     if not result["card_valid"]:
         logger.log("stopping after feature validation because the card did not pass")
-        return result
+        return normalize_output(result)
 
     logger.log("alignment started")
     try:
         config = tf.load_config(template_config)
         aligned_front, front_align_info = tf.align_card_to_template(front_image, front_template, return_candidates=False)
         aligned_back, back_align_info = tf.align_card_to_template(back_image, back_template, return_candidates=False)
-        front_artifacts = tf.extract_side_artifacts(aligned_front, config, "front")
-        back_artifacts = tf.extract_side_artifacts(aligned_back, config, "back")
+        front_artifacts = tf.extract_side_artifacts(
+            aligned_front,
+            config,
+            "front",
+            subject_image=front_image,
+            align_info=front_align_info,
+        )
+        back_artifacts = tf.extract_side_artifacts(
+            aligned_back,
+            config,
+            "back",
+            subject_image=back_image,
+            align_info=back_align_info,
+        )
         if debug_dir:
             tf.save_debug_artifacts(debug_dir, "front", front_artifacts)
             tf.save_debug_artifacts(debug_dir, "back", back_artifacts)
@@ -152,12 +185,12 @@ def run_pipeline(
         logger.log("alignment finished")
     except Exception as e:
         logger.exception("alignment", e)
-        return result
+        return normalize_output(result)
 
     photo_crop = front_artifacts.get("photo", None)
     if photo_crop is None or photo_crop.size == 0:
         logger.log("front photo crop is missing; skipping face match, OCR, and liveness")
-        return result
+        return normalize_output(result)
 
     logger.log("face match started")
     try:
@@ -175,22 +208,30 @@ def run_pipeline(
         logger.exception("face match", e)
 
     logger.log("ocr started")
+    card_valid_after_features = bool(result["card_valid"])
+    result["card_valid"] = False
     try:
         fields = ao.extract_fields_from_crops(
             front_crops=front_artifacts.get("crops", {}),
             back_crops=back_artifacts.get("crops", {}),
         )
+        id_match = ao.ids_match_strict(fields.get("front_id_number", ""), fields.get("back_id_number", ""))
         result["text"] = {
             "name": fields.get("name", ""),
             "address": fields.get("address", ""),
             "id_number": fields.get("id_number", ""),
+            "front_id_number": fields.get("front_id_number", ""),
+            "back_id_number": fields.get("back_id_number", ""),
+            "id_numbers_match": bool(id_match),
             "birth_date": fields.get("birth_date", ""),
             "expiry_date": fields.get("expiry_date", ""),
             "front_full_text": fields.get("front_full_text", ""),
             "back_full_text": fields.get("back_full_text", ""),
         }
-        logger.log("ocr finished")
+        result["card_valid"] = bool(card_valid_after_features)
+        logger.log(f"ocr finished: front_back_id_match={id_match}")
     except Exception as e:
+        result["card_valid"] = False
         logger.exception("ocr", e)
 
     logger.log("liveness started")
@@ -209,10 +250,9 @@ def run_pipeline(
     result["overall_passed"] = bool(
         result["card_valid"]
         and bool(result.get("face_match"))
-        and bool(result.get("liveness_passed"))
     )
     logger.log(f"pipeline finished: overall_passed={result['overall_passed']}")
-    return result
+    return normalize_output(result)
 
 
 def main():

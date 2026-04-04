@@ -19,8 +19,8 @@ HERE = Path(__file__).resolve().parent
 # ── inputs ────────────────────────────────────────────────────────────────────
 FRONT_IMAGE     = HERE / "front.jpg"
 BACK_IMAGE      = HERE / "back.jpeg"
-FRONT_TEMPLATE  = HERE / "front_template.png"
-BACK_TEMPLATE   = HERE / "back_template.png"
+FRONT_TEMPLATE  = HERE / "templates" / "front_template.png"
+BACK_TEMPLATE   = HERE / "templates" / "back_template.png"
 TEMPLATE_CONFIG = HERE / "id_template_config.json"
 
 # selfie: look in this folder first, then parent folder
@@ -42,7 +42,8 @@ def save_json(path: Path, data) -> None:
         if isinstance(o, Path):
             return str(o)
         raise TypeError(type(o))
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2, default=_serial), encoding="utf-8")
+    payload = ao.prepare_for_json_output(data)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=_serial), encoding="utf-8")
 
 def log(msg: str) -> None:
     line = f"[{datetime.now().strftime('%H:%M:%S')}] {msg}"
@@ -108,12 +109,22 @@ crops_dir.mkdir(exist_ok=True)
 
 if aligned_front is not None:
     log("Extracting front crops …")
-    front_artifacts = tf.extract_side_artifacts(aligned_front, config, "front")
+    front_artifacts = tf.extract_side_artifacts(
+        aligned_front,
+        config,
+        "front",
+        subject_image=FRONT_IMAGE,
+        align_info=front_info,
+    )
     cv2.imwrite(str(OUT_DIR / "front_aligned.png"), aligned_front)
     if front_artifacts.get("cleaned") is not None:
         cv2.imwrite(str(OUT_DIR / "front_cleaned.png"), front_artifacts["cleaned"])
     if front_artifacts.get("photo") is not None:
         cv2.imwrite(str(OUT_DIR / "front_photo_crop.png"), front_artifacts["photo"])
+    if front_artifacts.get("outline") is not None:
+        cv2.imwrite(str(OUT_DIR / "front_outline.png"), front_artifacts["outline"])
+    if front_artifacts.get("projection") is not None:
+        cv2.imwrite(str(OUT_DIR / "front_projection.png"), front_artifacts["projection"])
     for name, crop in front_artifacts.get("crops", {}).items():
         if crop is not None and crop.size > 0:
             cv2.imwrite(str(crops_dir / f"front_{name}.png"), crop)
@@ -121,10 +132,20 @@ if aligned_front is not None:
 
 if aligned_back is not None:
     log("Extracting back crops …")
-    back_artifacts = tf.extract_side_artifacts(aligned_back, config, "back")
+    back_artifacts = tf.extract_side_artifacts(
+        aligned_back,
+        config,
+        "back",
+        subject_image=BACK_IMAGE,
+        align_info=back_info,
+    )
     cv2.imwrite(str(OUT_DIR / "back_aligned.png"), aligned_back)
     if back_artifacts.get("cleaned") is not None:
         cv2.imwrite(str(OUT_DIR / "back_cleaned.png"), back_artifacts["cleaned"])
+    if back_artifacts.get("outline") is not None:
+        cv2.imwrite(str(OUT_DIR / "back_outline.png"), back_artifacts["outline"])
+    if back_artifacts.get("projection") is not None:
+        cv2.imwrite(str(OUT_DIR / "back_projection.png"), back_artifacts["projection"])
     for name, crop in back_artifacts.get("crops", {}).items():
         if crop is not None and crop.size > 0:
             cv2.imwrite(str(crops_dir / f"back_{name}.png"), crop)

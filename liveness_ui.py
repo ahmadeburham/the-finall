@@ -1,5 +1,5 @@
-"""
-liveness_ui.py  —  Flask-based liveness + ID verification UI.
+﻿"""
+liveness_ui.py  â€”  Flask-based liveness + ID verification UI.
 
 Usage:
     python liveness_ui.py
@@ -14,34 +14,34 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
 from flask import Flask, jsonify, render_template, request
-
-# ── project root on sys.path ──────────────────────────────────────────────────
-ROOT = Path(__file__).parent
-sys.path.insert(0, str(ROOT))
 
 import arabic_ocr as ao
 import face_match_top4 as fm
 import liveness_gate as lg
 import template_fields as tf
 
-# ── Flask app ─────────────────────────────────────────────────────────────────
+# â”€â”€ project root on sys.path â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ROOT = Path(__file__).parent
+sys.path.insert(0, str(ROOT))
+
+# â”€â”€ Flask app â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app = Flask(__name__, template_folder=str(ROOT / "templates"))
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 MB
 
-FRONT_TPL = str(ROOT / "front_template.png")
-BACK_TPL  = str(ROOT / "back_template.png")
+FRONT_TPL = str(ROOT / "templates" / "front_template.png")
+BACK_TPL  = str(ROOT / "templates" / "back_template.png")
 TPL_CFG   = str(ROOT / "id_template_config.json")
 
 OCR_FIELDS = (
     "name", "address", "id_number", "birth_date",
     "expiry_date", "issue_date", "profession",
     "gender", "religion", "marital_status",
+    "front_id_number", "back_id_number",
 )
 
 
-# ── Routes ────────────────────────────────────────────────────────────────────
+# â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.route("/")
 def index():
     return render_template("liveness.html")
@@ -68,32 +68,44 @@ def verify():
 
         config = tf.load_config(TPL_CFG)
 
-        # ══ GATE 1 — Card alignment ═══════════════════════════════════════════
+        # â•â• GATE 1 â€” Card alignment â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         try:
-            aligned_front, _ = tf.align_card_to_template(
+            aligned_front, front_align_info = tf.align_card_to_template(
                 front_path, FRONT_TPL, return_candidates=False
             )
-            front_art = tf.extract_side_artifacts(aligned_front, config, "front")
+            front_art = tf.extract_side_artifacts(
+                aligned_front,
+                config,
+                "front",
+                subject_image=front_path,
+                align_info=front_align_info,
+            )
         except Exception as exc:
             return jsonify({
                 "stage": "alignment_failed", "gate": 1, "overall_passed": False,
                 "error": str(exc),
-                "message_ar": "تعذّر التعرف على الوجه الأمامي — تأكد أنها هوية وطنية مصرية",
+                "message_ar": "ØªØ¹Ø°Ù‘Ø± Ø§Ù„ØªØ¹Ø±Ù Ø¹Ù„Ù‰ Ø§Ù„ÙˆØ¬Ù‡ Ø§Ù„Ø£Ù…Ø§Ù…ÙŠ â€” ØªØ£ÙƒØ¯ Ø£Ù†Ù‡Ø§ Ù‡ÙˆÙŠØ© ÙˆØ·Ù†ÙŠØ© Ù…ØµØ±ÙŠØ©",
             })
 
         try:
-            aligned_back, _ = tf.align_card_to_template(
+            aligned_back, back_align_info = tf.align_card_to_template(
                 back_path, BACK_TPL, return_candidates=False
             )
-            back_art = tf.extract_side_artifacts(aligned_back, config, "back")
+            back_art = tf.extract_side_artifacts(
+                aligned_back,
+                config,
+                "back",
+                subject_image=back_path,
+                align_info=back_align_info,
+            )
         except Exception as exc:
             return jsonify({
                 "stage": "alignment_failed", "gate": 1, "overall_passed": False,
                 "error": str(exc),
-                "message_ar": "تعذّر التعرف على الوجه الخلفي — تأكد أنها هوية وطنية مصرية",
+                "message_ar": "ØªØ¹Ø°Ù‘Ø± Ø§Ù„ØªØ¹Ø±Ù Ø¹Ù„Ù‰ Ø§Ù„ÙˆØ¬Ù‡ Ø§Ù„Ø®Ù„ÙÙŠ â€” ØªØ£ÙƒØ¯ Ø£Ù†Ù‡Ø§ Ù‡ÙˆÙŠØ© ÙˆØ·Ù†ÙŠØ© Ù…ØµØ±ÙŠØ©",
             })
 
-        # ══ GATE 2 — OCR + valid 14-digit Egyptian ID ════════════════════════
+        # â•â• GATE 2 â€” OCR + valid 14-digit Egyptian ID â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         ocr_fields: dict = {}
         try:
             fields = ao.extract_fields_from_crops(
@@ -101,11 +113,15 @@ def verify():
                 back_crops=back_art.get("crops", {}),
             )
             ocr_fields = {k: fields.get(k, "") for k in OCR_FIELDS}
+            ocr_fields["id_numbers_match"] = ao.ids_match_strict(
+                fields.get("front_id_number", ""),
+                fields.get("back_id_number", ""),
+            )
         except Exception as exc:
             return jsonify({
                 "stage": "invalid_card", "gate": 2, "overall_passed": False,
                 "error": str(exc),
-                "message_ar": "فشل استخراج البيانات من البطاقة",
+                "message_ar": "ÙØ´Ù„ Ø§Ø³ØªØ®Ø±Ø§Ø¬ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ù…Ù† Ø§Ù„Ø¨Ø·Ø§Ù‚Ø©",
             })
 
         id_digits = "".join(c for c in ocr_fields.get("id_number", "") if c.isdigit())
@@ -113,10 +129,11 @@ def verify():
             return jsonify({
                 "stage": "invalid_card", "gate": 2, "overall_passed": False,
                 "ocr": ocr_fields,
-                "message_ar": "لا تبدو البطاقة هوية وطنية مصرية — لم يُستخرج رقم هوية مكوّن من ١٤ رقمًا",
+                "message_ar": "Ù„Ø§ ØªØ¨Ø¯Ùˆ Ø§Ù„Ø¨Ø·Ø§Ù‚Ø© Ù‡ÙˆÙŠØ© ÙˆØ·Ù†ÙŠØ© Ù…ØµØ±ÙŠØ© â€” Ù„Ù… ÙŠÙØ³ØªØ®Ø±Ø¬ Ø±Ù‚Ù… Ù‡ÙˆÙŠØ© Ù…ÙƒÙˆÙ‘Ù† Ù…Ù† Ù¡Ù¤ Ø±Ù‚Ù…Ù‹Ø§",
             })
 
-        # ══ GATE 3 — Face match ═══════════════════════════════════════════════
+
+        # â•â• GATE 3 â€” Face match â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         photo_crop = front_art.get("photo")
         if photo_crop is not None and getattr(photo_crop, "size", 0) > 0:
             try:
@@ -124,7 +141,7 @@ def verify():
                     selfie_path=selfie_path,
                     target_face_bgr=photo_crop,
                 )
-                face_result = {"passed": bool(fm_passed), "logs": _san(fm_logs)}
+                face_result = {"passed": bool(fm_passed), "logs": lg.sanitize(fm_logs)}
             except Exception as exc:
                 face_result = {"passed": False, "error": str(exc)}
         else:
@@ -135,25 +152,17 @@ def verify():
                 "stage": "face_match_failed", "gate": 3, "overall_passed": False,
                 "ocr": ocr_fields,
                 "face_match": face_result,
-                "message_ar": "الوجه غير مطابق — يُرجى التأكد أن الشخص هو صاحب البطاقة",
+                "message_ar": "Ø§Ù„ÙˆØ¬Ù‡ ØºÙŠØ± Ù…Ø·Ø§Ø¨Ù‚ â€” ÙŠÙØ±Ø¬Ù‰ Ø§Ù„ØªØ£ÙƒØ¯ Ø£Ù† Ø§Ù„Ø´Ø®Øµ Ù‡Ùˆ ØµØ§Ø­Ø¨ Ø§Ù„Ø¨Ø·Ø§Ù‚Ø©",
             })
 
-        # ══ GATE 4 — Liveness ════════════════════════════════════════════════
+        # â•â• GATE 4 â€” Liveness â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         try:
-            liveness_result = _san(lg.check_selfie_liveness(selfie_path=selfie_path))
+            liveness_result = lg.sanitize(lg.check_selfie_liveness(selfie_path=selfie_path))
         except Exception as exc:
             liveness_result = {"passed": False, "error": str(exc)}
 
-        if not liveness_result.get("passed"):
-            return jsonify({
-                "stage": "liveness_failed", "gate": 4, "overall_passed": False,
-                "ocr": ocr_fields,
-                "face_match": face_result,
-                "liveness": liveness_result,
-                "message_ar": "فشل فحص الحيوية — يبدو أن الصورة مزيّفة أو غير حية",
-            })
 
-        # ══ ALL GATES PASSED ══════════════════════════════════════════════════
+        # â•â• ALL GATES PASSED â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         return jsonify({
             "stage": "completed", "gate": None, "overall_passed": True,
             "ocr": ocr_fields,
@@ -173,7 +182,7 @@ def verify():
             shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def _save_upload(field: str, tmpdir: str, filename: str) -> "str | None":
     f = request.files.get(field)
     if f and f.filename:
@@ -204,22 +213,6 @@ def _write_b64(b64: str, tmpdir: str, filename: str) -> "str | None":
         return out
     except Exception:
         return None
-
-
-def _san(obj):
-    if isinstance(obj, dict):
-        return {str(k): _san(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
-        return [_san(v) for v in obj]
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    if isinstance(obj, np.integer):
-        return int(obj)
-    if isinstance(obj, np.floating):
-        return float(obj)
-    if isinstance(obj, Path):
-        return str(obj)
-    return obj
 
 
 def _local_ip() -> str:

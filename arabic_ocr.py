@@ -18,6 +18,9 @@ AR_NUM_MAP = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567
 TO_AR_NUM_MAP = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
 EXPIRY_LABEL = "البطاقه ساريه حتي"
 EXPIRY_LABEL_TOKENS = ["البطاقه", "ساريه", "حتي"]
+ARABIC_TEXT_RE = re.compile(r"[\u0600-\u06FF]")
+RLI = "\u2067"
+PDI = "\u2069"
 
 # ── Detailed Tracing Logger ─────────────────────────────────────────────
 _tracer_logger = None
@@ -126,6 +129,26 @@ def normalize_arabic_text(text: str) -> str:
     return text
 
 
+def format_text_for_json(text: str) -> str:
+    if not isinstance(text, str):
+        return text
+    if not text or not ARABIC_TEXT_RE.search(text):
+        return text
+    if text.startswith(RLI) and text.endswith(PDI):
+        return text
+    return f"{RLI}{text}{PDI}"
+
+
+def prepare_for_json_output(value):
+    if isinstance(value, dict):
+        return {str(k): prepare_for_json_output(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [prepare_for_json_output(v) for v in value]
+    if isinstance(value, str):
+        return format_text_for_json(value)
+    return value
+
+
 def normalize_arabic_for_match(text: str) -> str:
     text = normalize_arabic_text(text)
     text = normalize_digits(text)
@@ -153,6 +176,12 @@ def to_arabic_digits(text: str) -> str:
 
 def only_digits(text: str) -> str:
     return re.sub(r"\D+", "", normalize_digits(text))
+
+
+def ids_match_strict(front_id: str, back_id: str) -> bool:
+    front_digits = only_digits(front_id)
+    back_digits = only_digits(back_id)
+    return len(front_digits) == 14 and len(back_digits) == 14 and front_digits == back_digits
 
 
 def _resize_up(image_bgr: np.ndarray, target_short: int = 320) -> np.ndarray:
@@ -187,29 +216,6 @@ def preprocess_text_block(image_bgr: np.ndarray) -> List[np.ndarray]:
     return variants
 
 
-def preprocess_numeric_block(image_bgr: np.ndarray) -> List[np.ndarray]:
-    variants = []
-    up = _resize_up(image_bgr, target_short=260)
-    gray = cv2.cvtColor(up, cv2.COLOR_BGR2GRAY)
-    gray = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8)).apply(gray)
-    variants.append(cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR))
-
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 5))
-    blackhat = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, kernel)
-    variants.append(cv2.cvtColor(blackhat, cv2.COLOR_GRAY2BGR))
-
-    _, th_otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    variants.append(cv2.cvtColor(th_otsu, cv2.COLOR_GRAY2BGR))
-
-    _, th_inv = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-    variants.append(cv2.cvtColor(th_inv, cv2.COLOR_GRAY2BGR))
-
-    adap = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 11)
-    variants.append(cv2.cvtColor(adap, cv2.COLOR_GRAY2BGR))
-
-    adap_inv = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 31, 11)
-    variants.append(cv2.cvtColor(adap_inv, cv2.COLOR_GRAY2BGR))
-    return variants
 
 
 def _ocr_lines_from_image(image_bgr: np.ndarray) -> List[dict]:
@@ -260,50 +266,6 @@ def _score_text(lines: List[dict]) -> float:
     return ar_letters + avg_conf * 10.0
 
 
-def _extract_digit_candidates(lines: List[dict]) -> List[str]:
-    joined = normalize_digits(" ".join(x["text"] for x in lines))
-    joined = joined.replace("/", " ").replace("-", " ").replace(".", " ").replace("_", " ")
-    parts = re.findall(r"\d+", joined)
-
-    out = []
-    for p in parts:
-        if p:
-            out.append(p)
-
-    merged = only_digits(joined)
-    if merged:
-        out.append(merged)
-
-    seen = set()
-    uniq = []
-    for x in out:
-        if x not in seen:
-            uniq.append(x)
-            seen.add(x)
-    return uniq
-
-
-def _choose_numeric_candidate(candidates: List[str], prefer_len: int | None = None) -> str:
-    if not candidates:
-        return ""
-    if prefer_len is not None:
-        for c in sorted(candidates, key=len, reverse=True):
-            if len(c) == prefer_len:
-                return c
-        for c in sorted(candidates, key=len, reverse=True):
-            m = re.search(rf"\d{{{prefer_len}}}", c)
-            if m:
-                return m.group(0)
-    return sorted(candidates, key=len, reverse=True)[0]
-
-
-def _score_numeric(lines: List[dict], prefer_len: int | None = None) -> float:
-    candidates = _extract_digit_candidates(lines)
-    best = _choose_numeric_candidate(candidates, prefer_len=prefer_len)
-    digit_count = len(best)
-    avg_conf = float(np.mean([x["score"] for x in lines if isinstance(x.get("score"), (int, float))])) if lines else 0.0
-    length_bonus = 10.0 if prefer_len is not None and len(best) == prefer_len else 0.0
-    return digit_count * 3.0 + avg_conf * 10.0 + length_bonus
 
 
 def merge_lines(lines: List[dict]) -> str:
@@ -313,7 +275,40 @@ def merge_lines(lines: List[dict]) -> str:
 
 
 def numeric_field(lines: List[dict], prefer_len: int | None = None) -> str:
-    return _choose_numeric_candidate(_extract_digit_candidates(lines), prefer_len=prefer_len)
+    # Extract digit candidates from lines
+    joined = normalize_digits(" ".join(x["text"] for x in lines))
+    joined = joined.replace("/", " ").replace("-", " ").replace(".", " ").replace("_", " ")
+    parts = re.findall(r"\d+", joined)
+
+    candidates = []
+    for p in parts:
+        if p:
+            candidates.append(p)
+
+    merged = only_digits(joined)
+    if merged:
+        candidates.append(merged)
+
+    # Remove duplicates while preserving order
+    seen = set()
+    uniq = []
+    for x in candidates:
+        if x not in seen:
+            uniq.append(x)
+            seen.add(x)
+
+    # Choose best candidate
+    if not uniq:
+        return ""
+    if prefer_len is not None:
+        for c in sorted(uniq, key=len, reverse=True):
+            if len(c) == prefer_len:
+                return c
+        for c in sorted(uniq, key=len, reverse=True):
+            m = re.search(rf"\d{{{prefer_len}}}", c)
+            if m:
+                return m.group(0)
+    return sorted(uniq, key=len, reverse=True)[0]
 
 
 def _best_lines_for_text(image_bgr: np.ndarray) -> Tuple[List[dict], int, float]:
@@ -339,27 +334,14 @@ def _best_lines_for_text(image_bgr: np.ndarray) -> Tuple[List[dict], int, float]
 
 def _best_numeric_from_crop(image_bgr: np.ndarray, prefer_len: int | None = None) -> Tuple[str, List[dict], int, float]:
     trace("_best_numeric_from_crop", f"STARTED prefer_len={prefer_len}")
-    best_text = ""
-    best_lines = []
-    best_score = -1e18
-    best_idx = -1
-    for idx, variant in enumerate(preprocess_numeric_block(image_bgr)):
-        trace_var("_best_numeric_from_crop", f"variant_{idx}_shape", variant.shape)
-        lines = _ocr_lines_from_image(variant)
-        trace_var("_best_numeric_from_crop", f"variant_{idx}_lines", lines)
-        score = _score_numeric(lines, prefer_len=prefer_len)
-        trace_var("_best_numeric_from_crop", f"variant_{idx}_score", score)
-        text = numeric_field(lines, prefer_len=prefer_len)
-        trace_var("_best_numeric_from_crop", f"variant_{idx}_text", text)
-        if score > best_score:
-            best_score = score
-            best_text = text
-            best_lines = lines
-            best_idx = idx
-            trace("_best_numeric_from_crop", f"New best variant {idx}")
+    # Use the same text detection pipeline as _best_lines_for_text
+    best_lines, best_idx, best_score = _best_lines_for_text(image_bgr)
+    trace_var("_best_numeric_from_crop", "best_lines", best_lines)
     trace_var("_best_numeric_from_crop", "best_idx", best_idx)
-    trace_var("_best_numeric_from_crop", "best_text", best_text)
     trace_var("_best_numeric_from_crop", "best_score", best_score)
+    # Extract numeric result from those lines
+    best_text = numeric_field(best_lines, prefer_len=prefer_len)
+    trace_var("_best_numeric_from_crop", "best_text", best_text)
     return best_text, best_lines, best_idx, float(best_score)
 
 
@@ -609,6 +591,8 @@ def extract_fields_from_crops(front_crops: Dict[str, np.ndarray], back_crops: Di
                             break
     trace_var("extract_fields_from_crops", "id_number_after_century_fix", id_number)
 
+    front_id_number = only_digits(id_number)
+
     # ── back side ─────────────────────────────────────────────────────────────
     back_full_text_parts = []
     expiry_date = ""
@@ -618,52 +602,65 @@ def extract_fields_from_crops(front_crops: Dict[str, np.ndarray], back_crops: Di
     gender = ""
     religion = ""
     marital_status = ""
+    back_id_number = ""
+    back_id_lines: List[dict] = []
 
     if back_crops:
         trace("extract_fields_from_crops", "Processing back side fields")
-        # FIX 1b: recover trailing ID digits from the RIGHT EDGE of the back
-        # id_number crop.  The Tutankhamun watermark occupies the centre of the
-        # row; the rightmost 25 % (x ≥ 75 %) contains only the last few digits
-        # and the eagle emblem — no statue interference.  A 3× upscale makes the
-        # isolated Arabic-Indic digit characters large enough to detect reliably.
-        if "back_id_number" in back_crops and len(only_digits(id_number)) < 14:
-            _needed = 14 - len(only_digits(id_number))
-            trace_var("extract_fields_from_crops", "back_fix_needed", _needed)
+
+        # ── Back ID: fully independent extraction ─────────────────────────────
+        # Extract the back-side ID number completely on its own (prefer_len=14).
+        # This is NOT conditional on what the front extracted.
+        if "back_id_number" in back_crops:
             _bi = back_crops["back_id_number"]
+            # Full-crop pass first
+            back_id_number, back_id_lines, _, _ = _best_numeric_from_crop(_bi, prefer_len=14)
+            trace_var("extract_fields_from_crops", "back_id_full_crop", back_id_number)
+
+            # Right-edge pass (avoids Tutankhamun watermark in centre)
             _bw = _bi.shape[1]
-            trace_var("extract_fields_from_crops", "back_crop_width", _bw)
             _rs = _bi[:, int(_bw * 0.75):]
-            trace_var("extract_fields_from_crops", "right_strip_shape", _rs.shape)
             _rs_up = cv2.resize(_rs, (_rs.shape[1] * 3, _rs.shape[0] * 3),
                                  interpolation=cv2.INTER_CUBIC)
-            _rs_lines = _ocr_lines_from_image(_rs_up)
-            trace_var("extract_fields_from_crops", "right_strip_lines", _rs_lines)
-            _rs_digits = only_digits(
-                " ".join(normalize_digits(l.get("text", "")) for l in _rs_lines)
-            )
-            trace_var("extract_fields_from_crops", "right_strip_digits", _rs_digits)
-            if _rs_digits:
-                for _sl in (_needed, _needed + 1, _needed + 2):
-                    if len(_rs_digits) >= _sl:
-                        _suffix = _rs_digits[-_sl:][:_needed]
-                        _cand = only_digits(id_number) + _suffix
-                        trace_var("extract_fields_from_crops", f"trying_suffix_{_sl}", _suffix)
-                        trace_var("extract_fields_from_crops", f"candidate_{_sl}", _cand)
-                        if len(_cand) == 14:
-                            # Accept 14-digit candidates even if birth date fails initially
-                            # Century correction will fix it later
-                            id_number = _cand
-                            trace("extract_fields_from_crops", f"Back fix succeeded with suffix length {_sl}")
-                            break
-                if len(only_digits(id_number)) < 14 and 1 <= len(_rs_digits) <= _needed:
-                    _suffix = _rs_digits.zfill(_needed)[-_needed:]
-                    _cand = only_digits(id_number) + _suffix
-                    trace_var("extract_fields_from_crops", "fallback_suffix", _suffix)
-                    trace_var("extract_fields_from_crops", "fallback_candidate", _cand)
-                    if len(_cand) == 14:
-                        id_number = _cand
-                        trace("extract_fields_from_crops", "Back fix succeeded with fallback")
-        trace_var("extract_fields_from_crops", "id_number_final", id_number)
+            _rs_text, _rs_lines_r, _, _ = _best_numeric_from_crop(_rs_up, prefer_len=14)
+            trace_var("extract_fields_from_crops", "back_id_right_edge", _rs_text)
+
+            # Pick whichever pass gave more digits (14-digit wins outright)
+            _back_full_d  = only_digits(back_id_number)
+            _back_edge_d  = only_digits(_rs_text)
+            if len(_back_edge_d) == 14:
+                back_id_number = _back_edge_d
+                back_id_lines  = _rs_lines_r
+            elif len(_back_full_d) == 14:
+                pass  # already set
+            elif len(_back_edge_d) > len(_back_full_d):
+                back_id_number = _back_edge_d
+                back_id_lines  = _rs_lines_r
+
+        trace_var("extract_fields_from_crops", "back_id_number_independent", back_id_number)
+
+        # ── Reconcile front vs back ID candidates ─────────────────────────────
+        _front_d = front_id_number
+        _back_d  = only_digits(back_id_number)
+        trace_var("extract_fields_from_crops", "front_id_digits", _front_d)
+        trace_var("extract_fields_from_crops", "back_id_digits",  _back_d)
+
+        if len(_back_d) == 14 and len(_front_d) != 14:
+            id_number = _back_d
+            id_lines  = back_id_lines
+            trace("extract_fields_from_crops", "Using back ID (back=14, front!=14)")
+        elif len(_front_d) == 14 and len(_back_d) != 14:
+            trace("extract_fields_from_crops", "Using front ID (front=14, back!=14)")
+        elif len(_back_d) == 14 and len(_front_d) == 14:
+            trace("extract_fields_from_crops", "Both sides gave 14 digits — keeping front ID")
+        elif len(_back_d) > len(_front_d):
+            id_number = _back_d
+            id_lines  = back_id_lines
+            trace("extract_fields_from_crops", f"Using back ID (longer: {len(_back_d)} vs {len(_front_d)})")
+        else:
+            trace("extract_fields_from_crops", f"Keeping front ID (longer or equal: {len(_front_d)} vs {len(_back_d)})")
+
+        trace_var("extract_fields_from_crops", "id_number_after_reconcile", id_number)
 
         # NEW: extract dedicated back-card text fields
         if "back_issue_date" in back_crops:
@@ -736,6 +733,8 @@ def extract_fields_from_crops(front_crops: Dict[str, np.ndarray], back_crops: Di
         "name": name,
         "address": address,
         "id_number": id_number,
+        "front_id_number": front_id_number,
+        "back_id_number": only_digits(back_id_number),
         "birth_date": birth_date,
         "expiry_date": expiry_date,
         "issue_date": issue_date,

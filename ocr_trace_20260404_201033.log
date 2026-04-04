@@ -1,0 +1,232 @@
+20:10:33.817 | INFO     | setup_tracer              | === OCR TRACING STARTED ===
+20:10:33.818 | DEBUG    | trace                     | [extract_fields_from_crops] STARTED
+20:10:33.818 | DEBUG    | trace_var                 | [extract_fields_from_crops] front_crops_keys: len=4 | value=['name', 'address', 'id_number', 'birth_date']
+20:10:33.818 | DEBUG    | trace_var                 | [extract_fields_from_crops] back_crops_keys: len=7 | value=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+20:10:33.819 | DEBUG    | trace                     | [extract_fields_from_crops] Processing front side fields
+20:10:33.821 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:10:33.833 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 1511, 3)
+20:10:46.133 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=5 | value=[{'text': 'احمد', 'score': 0.9930236339569092, 'box': [[1176, 128], [1325, 128], [1325, 199], [1176, 199]]}, {'text': 'المنصورى', 'score': 0.9821560978889465, 'box': [[436, 233], [779, 229], [780, 323
+20:10:46.133 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 35.801506876945496
+20:10:46.133 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:10:46.134 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 1511, 3)
+20:10:49.006 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=5 | value=[{'text': 'احمد', 'score': 0.9932259321212769, 'box': [[1175, 119], [1332, 122], [1330, 209], [1173, 206]]}, {'text': 'عماد', 'score': 0.9812091588973999, 'box': [[1180, 243], [1331, 243], [1331, 326]
+20:10:49.007 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 35.656331062316895
+20:10:49.007 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 1511, 3)
+20:10:51.936 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=4 | value=[{'text': 'احمد', 'score': 0.9924038052558899, 'box': [[1173, 121], [1333, 121], [1333, 206], [1173, 206]]}, {'text': 'عماد', 'score': 0.8883453011512756, 'box': [[1175, 241], [1332, 241], [1332, 326]
+20:10:51.937 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 37.625046253204346
+20:10:51.938 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 2
+20:10:51.938 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 1511, 3)
+20:10:54.765 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=5 | value=[{'text': 'احمد', 'score': 0.9923457503318787, 'box': [[1176, 128], [1327, 128], [1327, 214], [1176, 214]]}, {'text': 'المنصورى', 'score': 0.9844930171966553, 'box': [[436, 233], [776, 228], [777, 322
+20:10:54.766 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 35.80493450164795
+20:10:54.767 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 2
+20:10:54.767 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 37.625046253204346
+20:10:54.768 | DEBUG    | trace_var                 | [extract_fields_from_crops] name_lines: len=4 | value=[{'text': 'احمد', 'score': 0.9924038052558899, 'box': [[1173, 121], [1333, 121], [1333, 206], [1173, 206]]}, {'text': 'عماد', 'score': 0.8883453011512756, 'box': [[1175, 241], [1332, 241], [1332, 326]
+20:10:54.769 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:10:54.782 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 1825, 3)
+20:10:58.795 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=5 | value=[{'text': 'القبليه', 'score': 0.8914486765861511, 'box': [[1121, 48], [1348, 55], [1344, 176], [1118, 169]]}, {'text': 'السعديه', 'score': 0.9855185747146606, 'box': [[1359, 62], [1634, 66], [1633, 17
+20:10:58.796 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 38.600945353507996
+20:10:58.796 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:10:58.796 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 1825, 3)
+20:11:02.101 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=4 | value=[{'text': 'القبليه', 'score': 0.975372850894928, 'box': [[1120, 40], [1352, 54], [1344, 183], [1113, 169]]}, {'text': 'السعديه', 'score': 0.9438005685806274, 'box': [[1356, 59], [1635, 65], [1632, 177
+20:11:02.102 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 38.69322890043259
+20:11:02.102 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 1
+20:11:02.102 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 1825, 3)
+20:11:05.429 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=4 | value=[{'text': 'السعديه', 'score': 0.9177717566490173, 'box': [[1354, 58], [1635, 64], [1632, 175], [1352, 168]]}, {'text': 'القبليه', 'score': 0.9716669321060181, 'box': [[1120, 43], [1351, 55], [1345, 18
+20:11:05.430 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 38.56500947475433
+20:11:05.430 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 1825, 3)
+20:11:08.741 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=4 | value=[{'text': 'القبليه', 'score': 0.9895345568656921, 'box': [[1122, 43], [1350, 55], [1344, 181], [1116, 169]]}, {'text': 'السعديه', 'score': 0.9614437818527222, 'box': [[1358, 59], [1636, 67], [1633, 17
+20:11:08.742 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 38.73239228129387
+20:11:08.742 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 3
+20:11:08.744 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 3
+20:11:08.745 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 38.73239228129387
+20:11:08.745 | DEBUG    | trace_var                 | [extract_fields_from_crops] address_lines: len=4 | value=[{'text': 'القبليه', 'score': 0.9895345568656921, 'box': [[1122, 43], [1350, 55], [1344, 181], [1116, 169]]}, {'text': 'السعديه', 'score': 0.9614437818527222, 'box': [[1358, 59], [1636, 67], [1633, 17
+20:11:08.745 | DEBUG    | trace                     | [_best_numeric_from_crop] STARTED prefer_len=14
+20:11:08.746 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:11:08.753 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(172, 1752, 3)
+20:11:11.135 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=3 | value=[{'text': 'q', 'score': 0.5684643387794495, 'box': [[1548, 38], [1621, 38], [1621, 146], [1548, 146]]}, {'text': '٦', 'score': 0.49369460344314575, 'box': [[728, 34], [888, 34], [888, 134], [728, 134]
+20:11:11.135 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 12.753495732943216
+20:11:11.136 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:11:11.136 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(172, 1752, 3)
+20:11:12.921 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=2 | value=[{'text': '٩٥', 'score': 0.767290472984314, 'box': [[1531, 23], [1729, 23], [1729, 169], [1531, 169]]}, {'text': '٣٠٣١٠٠٦١١', 'score': 0.9764935970306396, 'box': [[5, 3], [1131, 17], [1130, 172], [3, 
+20:11:12.922 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 19.718920350074768
+20:11:12.922 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 1
+20:11:12.922 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(172, 1752, 3)
+20:11:14.560 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=3 | value=[{'text': '٩٠', 'score': 0.7610947489738464, 'box': [[1530, 18], [1731, 18], [1731, 171], [1530, 171]]}, {'text': '١١', 'score': 0.9443562030792236, 'box': [[889, 21], [1123, 24], [1122, 163], [888, 1
+20:11:14.561 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 19.931703170140587
+20:11:14.562 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 2
+20:11:14.562 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(172, 1752, 3)
+20:11:16.296 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=2 | value=[{'text': '٩٥', 'score': 0.75965815782547, 'box': [[1533, 27], [1729, 27], [1729, 169], [1533, 169]]}, {'text': '٣٠٣١٠٠٦١١', 'score': 0.9769831895828247, 'box': [[3, 6], [1131, 17], [1130, 171], [2, 1
+20:11:16.297 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 19.683206737041473
+20:11:16.298 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 2
+20:11:16.298 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 19.931703170140587
+20:11:16.298 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_lines: len=3 | value=[{'text': '٩٠', 'score': 0.7610947489738464, 'box': [[1530, 18], [1731, 18], [1731, 171], [1530, 171]]}, {'text': '١١', 'score': 0.9443562030792236, 'box': [[889, 21], [1123, 24], [1122, 163], [888, 1
+20:11:16.299 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_idx: 2
+20:11:16.299 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_score: 19.931703170140587
+20:11:16.300 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_text: 90113031006
+20:11:16.300 | DEBUG    | trace_var                 | [extract_fields_from_crops] id_number_initial: 90113031006
+20:11:16.300 | DEBUG    | trace_var                 | [extract_fields_from_crops] id_lines: len=3 | value=[{'text': '٩٠', 'score': 0.7610947489738464, 'box': [[1530, 18], [1731, 18], [1731, 171], [1530, 171]]}, {'text': '١١', 'score': 0.9443562030792236, 'box': [[889, 21], [1123, 24], [1122, 163], [888, 1
+20:11:16.301 | DEBUG    | trace                     | [_best_numeric_from_crop] STARTED prefer_len=8
+20:11:16.301 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:11:16.306 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(308, 944, 3)
+20:11:18.490 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=0 | value=[]
+20:11:18.491 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 0.0
+20:11:18.491 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:11:18.491 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(308, 944, 3)
+20:11:20.145 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=0 | value=[]
+20:11:20.146 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 0.0
+20:11:20.146 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(308, 944, 3)
+20:11:21.693 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=0 | value=[]
+20:11:21.694 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 0.0
+20:11:21.694 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(308, 944, 3)
+20:11:23.264 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=0 | value=[]
+20:11:23.264 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 0.0
+20:11:23.264 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 0
+20:11:23.266 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 0.0
+20:11:23.266 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_lines: len=0 | value=[]
+20:11:23.266 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_idx: 0
+20:11:23.267 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_score: 0.0
+20:11:23.267 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_text: 
+20:11:23.267 | DEBUG    | trace_var                 | [extract_fields_from_crops] birth_date_initial: 
+20:11:23.268 | DEBUG    | trace_var                 | [extract_fields_from_crops] _id_partial: 90113031006
+20:11:23.268 | DEBUG    | trace_var                 | [extract_fields_from_crops] _bd0: 
+20:11:23.268 | DEBUG    | trace_var                 | [extract_fields_from_crops] id_number_after_century_fix: 90113031006
+20:11:23.269 | DEBUG    | trace                     | [extract_fields_from_crops] Processing back side fields
+20:11:23.269 | DEBUG    | trace                     | [_best_numeric_from_crop] STARTED prefer_len=14
+20:11:23.269 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:11:23.283 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 1509, 3)
+20:11:26.306 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=2 | value=[{'text': '٣٠٣١٠٠٦١١٠٠٠٩٥', 'score': 0.9806267619132996, 'box': [[47, 51], [1265, 29], [1267, 148], [49, 169]]}, {'text': 'طالب', 'score': 0.9498937129974365, 'box': [[1011, 198], [1279, 182], [1289, 
+20:11:26.307 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 27.65260237455368
+20:11:26.307 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:11:26.307 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 1509, 3)
+20:11:29.267 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=2 | value=[{'text': '١٠٠٠٩٥', 'score': 0.9607484936714172, 'box': [[712, 37], [1257, 40], [1257, 143], [711, 140]]}, {'text': 'طالب', 'score': 0.9457809329032898, 'box': [[1012, 195], [1282, 186], [1287, 353], 
+20:11:29.268 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 19.532647132873535
+20:11:29.268 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 1509, 3)
+20:11:32.920 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=2 | value=[{'text': '٠٠٦١١٠٠٠٩٥', 'score': 0.983092188835144, 'box': [[390, 39], [1266, 17], [1269, 154], [393, 176]]}, {'text': 'طالب', 'score': 0.9325266480445862, 'box': [[1006, 188], [1284, 179], [1290, 355
+20:11:32.921 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 23.57809418439865
+20:11:32.921 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 1509, 3)
+20:11:35.618 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=2 | value=[{'text': '٠٩٥', 'score': 0.8472321629524231, 'box': [[956, 42], [1252, 51], [1250, 130], [954, 121]]}, {'text': 'طالب', 'score': 0.9499838352203369, 'box': [[1016, 198], [1280, 191], [1284, 352], [10
+20:11:35.619 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 15.9860799908638
+20:11:35.620 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 0
+20:11:35.621 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 27.65260237455368
+20:11:35.622 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_lines: len=2 | value=[{'text': '٣٠٣١٠٠٦١١٠٠٠٩٥', 'score': 0.9806267619132996, 'box': [[47, 51], [1265, 29], [1267, 148], [49, 169]]}, {'text': 'طالب', 'score': 0.9498937129974365, 'box': [[1011, 198], [1279, 182], [1289, 
+20:11:35.622 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_idx: 0
+20:11:35.622 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_score: 27.65260237455368
+20:11:35.623 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_text: 30310061100095
+20:11:35.623 | DEBUG    | trace_var                 | [extract_fields_from_crops] back_id_full_crop: 30310061100095
+20:11:35.625 | DEBUG    | trace                     | [_best_numeric_from_crop] STARTED prefer_len=14
+20:11:35.625 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:11:35.636 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 377, 3)
+20:11:37.015 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=1 | value=[{'text': 'طال', 'score': 0.8867707252502441, 'box': [[0, 192], [147, 189], [150, 313], [0, 317]]}]
+20:11:37.015 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 11.867707252502441
+20:11:37.016 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:11:37.016 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 377, 3)
+20:11:37.825 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=2 | value=[{'text': '0', 'score': 0.2994450330734253, 'box': [[0, 35], [135, 35], [135, 139], [0, 139]]}, {'text': 'طال', 'score': 0.794514000415802, 'box': [[0, 178], [154, 178], [154, 330], [0, 330]]}]
+20:11:37.825 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 8.469795167446136
+20:11:37.826 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 377, 3)
+20:11:38.647 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=2 | value=[{'text': '0', 'score': 0.3875957727432251, 'box': [[0, 34], [134, 37], [132, 137], [0, 133]]}, {'text': 'طال', 'score': 0.8705094456672668, 'box': [[0, 175], [154, 175], [154, 334], [0, 334]]}]
+20:11:38.648 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 9.29052609205246
+20:11:38.648 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 377, 3)
+20:11:39.468 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=2 | value=[{'text': '0', 'score': 0.5036852359771729, 'box': [[0, 38], [134, 41], [132, 143], [0, 140]]}, {'text': 'طال', 'score': 0.9066428542137146, 'box': [[0, 192], [152, 192], [152, 332], [0, 332]]}]
+20:11:39.469 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 10.051640450954437
+20:11:39.469 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 0
+20:11:39.470 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 11.867707252502441
+20:11:39.470 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_lines: len=1 | value=[{'text': 'طال', 'score': 0.8867707252502441, 'box': [[0, 192], [147, 189], [150, 313], [0, 317]]}]
+20:11:39.470 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_idx: 0
+20:11:39.471 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_score: 11.867707252502441
+20:11:39.471 | DEBUG    | trace_var                 | [_best_numeric_from_crop] best_text: 
+20:11:39.471 | DEBUG    | trace_var                 | [extract_fields_from_crops] back_id_right_edge: 
+20:11:39.472 | DEBUG    | trace_var                 | [extract_fields_from_crops] back_id_number_independent: 30310061100095
+20:11:39.472 | DEBUG    | trace_var                 | [extract_fields_from_crops] front_id_digits: 90113031006
+20:11:39.472 | DEBUG    | trace_var                 | [extract_fields_from_crops] back_id_digits: 30310061100095
+20:11:39.473 | DEBUG    | trace                     | [extract_fields_from_crops] Using back ID (back=14, front!=14)
+20:11:39.473 | DEBUG    | trace_var                 | [extract_fields_from_crops] id_number_after_reconcile: 30310061100095
+20:11:39.473 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:11:39.482 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 1104, 3)
+20:11:42.369 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=1 | value=[{'text': '٢٠٢٠١٠٢', 'score': 0.9147368669509888, 'box': [[354, 65], [897, 59], [898, 198], [355, 204]]}]
+20:11:42.370 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 16.147368669509888
+20:11:42.370 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:11:42.370 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 1104, 3)
+20:11:44.440 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=1 | value=[{'text': '٢٠٢٠١٠', 'score': 0.9369034767150879, 'box': [[348, 60], [789, 54], [791, 216], [351, 223]]}]
+20:11:44.440 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 15.369034767150879
+20:11:44.441 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 1104, 3)
+20:11:46.526 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=1 | value=[{'text': '٢٠٢٠١٠', 'score': 0.9443631768226624, 'box': [[345, 57], [819, 40], [825, 214], [351, 231]]}]
+20:11:46.527 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 15.443631768226624
+20:11:46.527 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 1104, 3)
+20:11:48.665 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=1 | value=[{'text': '٢٠٢٠/', 'score': 0.844100296497345, 'box': [[350, 75], [774, 67], [776, 190], [353, 198]]}]
+20:11:48.666 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 12.44100296497345
+20:11:48.667 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 0
+20:11:48.667 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 16.147368669509888
+20:11:48.669 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:11:48.684 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 1948, 3)
+20:11:52.900 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=1 | value=[{'text': 'طالب', 'score': 0.9350646138191223, 'box': [[1658, 0], [1884, 0], [1884, 122], [1658, 122]]}]
+20:11:52.901 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 13.350646138191223
+20:11:52.901 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:11:52.901 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 1948, 3)
+20:11:56.393 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=1 | value=[{'text': 'طالب', 'score': 0.99347984790802, 'box': [[1655, 0], [1887, 0], [1887, 133], [1655, 133]]}]
+20:11:56.394 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 13.9347984790802
+20:11:56.394 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 1
+20:11:56.395 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 1948, 3)
+20:11:59.980 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=1 | value=[{'text': 'طالب', 'score': 0.9940441250801086, 'box': [[1654, 0], [1886, 0], [1886, 134], [1654, 134]]}]
+20:11:59.981 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 13.940441250801086
+20:11:59.981 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 2
+20:11:59.982 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 1948, 3)
+20:12:03.451 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=1 | value=[{'text': 'طالب', 'score': 0.9901351928710938, 'box': [[1656, 0], [1884, 0], [1886, 128], [1658, 133]]}]
+20:12:03.451 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 13.901351928710938
+20:12:03.453 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 2
+20:12:03.454 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 13.940441250801086
+20:12:03.454 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:12:03.472 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 572, 3)
+20:12:05.135 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=1 | value=[{'text': 'ذكر', 'score': 0.8580607771873474, 'box': [[201, 17], [405, 0], [420, 159], [216, 178]]}]
+20:12:05.136 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 11.580607771873474
+20:12:05.136 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:12:05.136 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 572, 3)
+20:12:06.269 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=1 | value=[{'text': 'ذكر', 'score': 0.9858190417289734, 'box': [[215, 19], [403, 0], [419, 155], [230, 175]]}]
+20:12:06.270 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 12.858190417289734
+20:12:06.270 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 1
+20:12:06.270 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 572, 3)
+20:12:07.399 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=1 | value=[{'text': 'ذكر', 'score': 0.9839470982551575, 'box': [[211, 26], [402, 0], [423, 153], [232, 181]]}]
+20:12:07.400 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 12.839470982551575
+20:12:07.400 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 572, 3)
+20:12:08.517 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=1 | value=[{'text': 'ذكر', 'score': 0.9741173386573792, 'box': [[208, 22], [401, 0], [418, 154], [226, 177]]}]
+20:12:08.518 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 12.741173386573792
+20:12:08.519 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 1
+20:12:08.519 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 12.858190417289734
+20:12:08.521 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:12:08.540 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 634, 3)
+20:12:10.444 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=1 | value=[{'text': 'مسلم', 'score': 0.9886976480484009, 'box': [[193, 28], [459, 28], [459, 202], [193, 202]]}]
+20:12:10.445 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 13.886976480484009
+20:12:10.445 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:12:10.445 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 634, 3)
+20:12:11.705 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=1 | value=[{'text': 'ملم', 'score': 0.6853988766670227, 'box': [[173, 22], [464, 5], [482, 335], [191, 351]]}]
+20:12:11.705 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 9.853988766670227
+20:12:11.706 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 634, 3)
+20:12:13.020 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=2 | value=[{'text': 'مسلم', 'score': 0.9816231727600098, 'box': [[211, 51], [433, 44], [437, 174], [215, 181]]}, {'text': 'و', 'score': 0.21583396196365356, 'box': [[213, 125], [447, 130], [443, 321], [209, 316
+20:12:13.021 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 10.987285673618317
+20:12:13.021 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 634, 3)
+20:12:14.226 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=0 | value=[]
+20:12:14.227 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 0.0
+20:12:14.227 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 0
+20:12:14.228 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 13.886976480484009
+20:12:14.228 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+20:12:14.238 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 1025, 3)
+20:12:16.715 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=1 | value=[{'text': 'أعزب', 'score': 0.994001567363739, 'box': [[403, 64], [699, 35], [714, 189], [418, 219]]}]
+20:12:16.716 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 13.94001567363739
+20:12:16.717 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+20:12:16.717 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 1025, 3)
+20:12:19.474 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=1 | value=[{'text': 'أعزب', 'score': 0.9922335147857666, 'box': [[407, 65], [695, 43], [706, 192], [418, 215]]}]
+20:12:19.475 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 13.922335147857666
+20:12:19.475 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 1025, 3)
+20:12:21.505 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=1 | value=[{'text': 'أعزب', 'score': 0.8714806437492371, 'box': [[403, 60], [699, 33], [713, 193], [417, 220]]}]
+20:12:21.506 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 12.71480643749237
+20:12:21.507 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 1025, 3)
+20:12:23.441 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=1 | value=[{'text': 'عزب', 'score': 0.9883236289024353, 'box': [[415, 74], [668, 61], [674, 192], [421, 205]]}]
+20:12:23.442 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 12.883236289024353
+20:12:23.443 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 0
+20:12:23.443 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 13.94001567363739
+20:12:44.319 | DEBUG    | trace_var                 | [extract_fields_from_crops] birth_date_before_inference: 
+20:12:44.320 | DEBUG    | trace                     | [extract_fields_from_crops] Birth date invalid/missing, inferring from ID
+20:12:44.320 | DEBUG    | trace_var                 | [extract_fields_from_crops] birth_date_inferred: 20031006
+20:12:44.320 | DEBUG    | trace                     | [extract_fields_from_crops] Birth date inferred successfully
+20:12:44.321 | DEBUG    | trace                     | [extract_fields_from_crops] COMPLETED - returning results
+20:12:44.321 | DEBUG    | trace_var                 | [extract_fields_from_crops] final_id_number: 30310061100095
+20:12:44.322 | DEBUG    | trace_var                 | [extract_fields_from_crops] final_birth_date: 20031006

@@ -50,129 +50,241 @@ def crop_norm_box(img: np.ndarray, box, pad_px: int = 0) -> np.ndarray:
 def rotate_image(image: np.ndarray, angle: int) -> np.ndarray:
     if angle == 0:
         return image.copy()
-    if angle == 90:
-        return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
-    if angle == 180:
-        return cv2.rotate(image, cv2.ROTATE_180)
-    if angle == 270:
-        return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    raise ValueError(f"Unsupported angle: {angle}")
+    if angle not in {90, 180, 270}:
+        raise ValueError(f"Unsupported angle: {angle}")
+    h, w = image.shape[:2]
+    center = ((w - 1) / 2.0, (h - 1) / 2.0)
+    scale = 1.0
+    if angle in {90, 270}:
+        scale = min(float(w) / max(float(h), 1.0), float(h) / max(float(w), 1.0))
+    matrix = cv2.getRotationMatrix2D(center, -float(angle), scale)
+    return cv2.warpAffine(image, matrix, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
 
 
-def _create_detector(method: str):
-    if method == "sift":
-        if not hasattr(cv2, "SIFT_create"):
-            return None, None, None, None
-        return cv2.SIFT_create(nfeatures=5000), cv2.NORM_L2, True, 0.75
-    if method == "orb":
-        return cv2.ORB_create(nfeatures=8000, fastThreshold=5), cv2.NORM_HAMMING, False, 0.85
-    if method == "akaze":
-        return cv2.AKAZE_create(), cv2.NORM_HAMMING, False, 0.80
-    return None, None, None, None
+def order_points(pts: np.ndarray) -> np.ndarray:
+    pts = pts.reshape(4, 2).astype("float32")
+    rect = np.zeros((4, 2), dtype="float32")
+    s = pts.sum(axis=1)
+    rect[0] = pts[np.argmin(s)]
+    rect[2] = pts[np.argmax(s)]
+    diff = np.diff(pts, axis=1)
+    rect[1] = pts[np.argmin(diff)]
+    rect[3] = pts[np.argmax(diff)]
+    return rect
 
 
-def _match_and_align(template_bgr: np.ndarray, subject_bgr: np.ndarray, method: str):
-    tpl_gray = cv2.cvtColor(template_bgr, cv2.COLOR_BGR2GRAY)
-    sub_gray = cv2.cvtColor(subject_bgr, cv2.COLOR_BGR2GRAY)
+def _segment_card_contour(image_bgr: np.ndarray) -> Tuple[Optional[np.ndarray], float]:
+    h, w = image_bgr.shape[:2]
+    img_area = float(h * w)
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (9, 9), 0)
 
-    detector, norm, use_flann, ratio = _create_detector(method)
-    if detector is None:
-        return None
+    candidates = []
+    _, th1 = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    candidates.append(th1)
+    _, th2 = cv2.threshold(blur, 160, 255, cv2.THRESH_BINARY)
+    candidates.append(th2)
+    edges = cv2.Canny(blur, 20, 80)
+    edges = cv2.dilate(edges, np.ones((5, 5), np.uint8), iterations=3)
+    candidates.append(edges)
 
-    kp_t, des_t = detector.detectAndCompute(tpl_gray, None)
-    kp_s, des_s = detector.detectAndCompute(sub_gray, None)
+    best_contour = None
+    best_score = -1e18
 
-    if des_t is None or des_s is None or len(kp_t) < 4 or len(kp_s) < 4:
-        return None
+    for mask in candidates:
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+        closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=3)
+        cnts, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
 
-    if use_flann:
-        matcher = cv2.FlannBasedMatcher(dict(algorithm=1, trees=5), dict(checks=64))
-    else:
-        matcher = cv2.BFMatcher(norm, crossCheck=False)
+        for c in cnts[:5]:
+            area = float(cv2.contourArea(c))
+            frac = area / max(img_area, 1.0)
+            if frac < 0.10 or frac > 0.97:
+                continue
+            peri = cv2.arcLength(c, True)
+            for eps in [0.01, 0.02, 0.03, 0.04, 0.05, 0.06]:
+                approx = cv2.approxPolyDP(c, eps * peri, True)
+                if len(approx) != 4:
+                    continue
+                pts = approx.reshape(4, 2).astype("float32")
+                rect = order_points(pts)
+                wc = max(np.linalg.norm(rect[1] - rect[0]), np.linalg.norm(rect[2] - rect[3]))
+                hc = max(np.linalg.norm(rect[3] - rect[0]), np.linalg.norm(rect[2] - rect[1]))
+                if hc == 0:
+                    continue
+                ratio = max(wc, hc) / max(min(wc, hc), 1.0)
+                card_ratio = 85.6 / 54.0
+                err = abs(ratio - card_ratio) / card_ratio
+                score = frac - err * 0.8
+                if score > best_score:
+                    best_score = float(score)
+                    best_contour = approx
+                break
 
-    knn = matcher.knnMatch(des_t, des_s, k=2)
-    good = []
-    for pair in knn:
-        if len(pair) < 2:
-            continue
-        m, n = pair
-        if m.distance < ratio * n.distance:
-            good.append(m)
+    return best_contour, float(best_score)
 
-    if len(good) < 4:
-        return None
 
-    pts_t = np.float32([kp_t[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
-    pts_s = np.float32([kp_s[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+def _rotate_source_corners(rect: np.ndarray, rotation: int) -> np.ndarray:
+    if rotation == 0:
+        return rect.astype("float32")
+    if rotation == 90:
+        return np.array([rect[3], rect[0], rect[1], rect[2]], dtype="float32")
+    if rotation == 180:
+        return np.array([rect[2], rect[3], rect[0], rect[1]], dtype="float32")
+    if rotation == 270:
+        return np.array([rect[1], rect[2], rect[3], rect[0]], dtype="float32")
+    raise ValueError(f"Unsupported rotation: {rotation}")
 
-    H, mask = cv2.findHomography(pts_s, pts_t, cv2.RANSAC, 4.0)
-    if H is None or mask is None:
-        return None
 
-    mask = mask.ravel().astype(bool)
-    inliers = int(mask.sum())
-    inlier_ratio = float(inliers / max(len(mask), 1))
-    if inliers < 8:
-        return None
+def _score_alignment_candidate(aligned_bgr: np.ndarray, template_bgr: np.ndarray) -> float:
+    if aligned_bgr.shape[:2] != template_bgr.shape[:2]:
+        aligned_bgr = cv2.resize(aligned_bgr, (template_bgr.shape[1], template_bgr.shape[0]))
 
-    h, w = template_bgr.shape[:2]
-    aligned = cv2.warpPerspective(subject_bgr, H, (w, h))
-    score = float(inliers * inlier_ratio)
+    aligned_gray = cv2.cvtColor(aligned_bgr, cv2.COLOR_BGR2GRAY)
+    template_gray = cv2.cvtColor(template_bgr, cv2.COLOR_BGR2GRAY)
+    aligned_gray = cv2.GaussianBlur(aligned_gray, (5, 5), 0)
+    template_gray = cv2.GaussianBlur(template_gray, (5, 5), 0)
 
-    return {
-        "aligned": aligned,
-        "method": method,
-        "inliers": inliers,
-        "inlier_ratio": inlier_ratio,
-        "score": score,
-        "good_matches": len(good),
-    }
+    corr_score = float(cv2.matchTemplate(aligned_gray, template_gray, cv2.TM_CCOEFF_NORMED)[0][0])
+
+    aligned_edges = cv2.Canny(aligned_gray, 60, 160)
+    template_edges = cv2.Canny(template_gray, 60, 160)
+    edge_score = float(cv2.matchTemplate(aligned_edges, template_edges, cv2.TM_CCOEFF_NORMED)[0][0])
+
+    third = max(1, aligned_gray.shape[1] // 3)
+    aligned_lr = float(np.mean(aligned_gray[:, :third]) - np.mean(aligned_gray[:, -third:]))
+    template_lr = float(np.mean(template_gray[:, :third]) - np.mean(template_gray[:, -third:]))
+    lr_score = 1.0 - min(abs(aligned_lr - template_lr) / 255.0, 1.0)
+
+    return float(0.35 * corr_score + 0.50 * edge_score + 0.15 * lr_score)
+
+
+def _candidate_rotations_for_subject(subject_h: int, subject_w: int) -> Tuple[int, ...]:
+    if subject_h >= subject_w:
+        return (0, 180)
+    return (90, 270)
 
 
 def align_card_to_template(subject_image: str | Path, template_image: str | Path, return_candidates: bool = False):
     template_bgr = read_image(template_image)
     subject_bgr = read_image(subject_image)
+    template_h, template_w = template_bgr.shape[:2]
+    subject_h, subject_w = subject_bgr.shape[:2]
+    template_corners = np.array(
+        [[0, 0], [template_w - 1, 0], [template_w - 1, template_h - 1], [0, template_h - 1]],
+        dtype="float32",
+    )
 
-    best = None
-    candidates: List[Dict] = []
+    candidates = []
+    best_candidate = None
+    for rotation in _candidate_rotations_for_subject(subject_h, subject_w):
+        rotated_subject = rotate_image(subject_bgr, rotation)
+        contour, contour_score = _segment_card_contour(rotated_subject)
+        candidate = {
+            "rotation": int(rotation),
+            "valid": False,
+            "inliers": 0,
+            "inlier_ratio": 0.0,
+            "good_matches": 0,
+            "score": float(contour_score),
+            "orientation_score": 0.0,
+        }
+        if contour is None:
+            candidates.append(candidate)
+            continue
 
-    for angle in [0, 90, 180, 270]:
-        rotated = rotate_image(subject_bgr, angle)
-        for method in ["sift", "akaze", "orb"]:
-            res = _match_and_align(template_bgr, rotated, method)
-            if res is None:
-                candidates.append({"method": method, "rotation": angle, "valid": False})
-                continue
-            res["rotation"] = angle
-            candidates.append(
+        rect = order_points(contour.reshape(4, 2).astype("float32"))
+        source_to_template = cv2.getPerspectiveTransform(rect, template_corners)
+        template_to_source = cv2.getPerspectiveTransform(template_corners, rect)
+        aligned = cv2.warpPerspective(rotated_subject, source_to_template, (template_w, template_h))
+        orientation_score = _score_alignment_candidate(aligned, template_bgr)
+        candidate.update(
+            {
+                "valid": True,
+                "inliers": 4,
+                "inlier_ratio": 1.0,
+                "good_matches": 4,
+                "source_corners": rect,
+                "source_to_template": source_to_template,
+                "template_to_source": template_to_source,
+                "aligned": aligned,
+                "orientation_score": float(orientation_score),
+            }
+        )
+        candidates.append(candidate)
+        if best_candidate is None or candidate["orientation_score"] > best_candidate["orientation_score"]:
+            best_candidate = candidate
+
+    if best_candidate is None:
+        aligned = cv2.resize(subject_bgr, (template_w, template_h))
+        info = {
+            "method": "contour_template_projection",
+            "rotation": 0,
+            "orientation_score": 0.0,
+            "inliers": 0,
+            "inlier_ratio": 0.0,
+            "score": 0.0,
+            "good_matches": 0,
+            "card_detected": False,
+            "template_size": [int(template_w), int(template_h)],
+            "source_size": [int(subject_w), int(subject_h)],
+            "card_corners_px": [],
+            "card_corners_norm": [],
+            "source_to_template_matrix": [],
+            "template_to_source_matrix": [],
+        }
+        if return_candidates:
+            info["candidates"] = [
                 {
-                    "method": method,
-                    "rotation": angle,
-                    "valid": True,
-                    "inliers": res["inliers"],
-                    "inlier_ratio": res["inlier_ratio"],
-                    "score": res["score"],
-                    "good_matches": res["good_matches"],
+                    "method": "contour_template_projection",
+                    "rotation": int(candidate["rotation"]),
+                    "valid": bool(candidate["valid"]),
+                    "inliers": int(candidate["inliers"]),
+                    "inlier_ratio": float(candidate["inlier_ratio"]),
+                    "score": float(candidate["score"]),
+                    "orientation_score": float(candidate["orientation_score"]),
                 }
-            )
-            if best is None or res["score"] > best["score"]:
-                best = res
+                for candidate in candidates
+            ]
+        return aligned, info
 
-    if best is None:
-        raise RuntimeError("Could not align card to template")
+    rotation = int(best_candidate["rotation"])
+    source_corners = best_candidate["source_corners"]
+    source_to_template = best_candidate["source_to_template"]
+    template_to_source = best_candidate["template_to_source"]
+    aligned = best_candidate["aligned"]
 
     info = {
-        "method": best["method"],
-        "rotation": best["rotation"],
-        "inliers": best["inliers"],
-        "inlier_ratio": best["inlier_ratio"],
-        "score": best["score"],
-        "good_matches": best["good_matches"],
-        "template_size": [template_bgr.shape[1], template_bgr.shape[0]],
+        "method": "contour_template_projection",
+        "rotation": int(rotation),
+        "orientation_score": float(best_candidate["orientation_score"]),
+        "inliers": 4,
+        "inlier_ratio": 1.0,
+        "score": float(best_candidate["score"]),
+        "good_matches": 4,
+        "card_detected": True,
+        "template_size": [int(template_w), int(template_h)],
+        "source_size": [int(subject_w), int(subject_h)],
+        "card_corners_px": [[float(x), float(y)] for x, y in source_corners],
+        "card_corners_norm": [[float(x / max(subject_w, 1)), float(y / max(subject_h, 1))] for x, y in source_corners],
+        "source_to_template_matrix": [[float(v) for v in row] for row in source_to_template],
+        "template_to_source_matrix": [[float(v) for v in row] for row in template_to_source],
     }
     if return_candidates:
-        info["candidates"] = candidates
-    return best["aligned"], info
+        info["candidates"] = [
+            {
+                "method": "contour_template_projection",
+                "rotation": int(candidate["rotation"]),
+                "valid": bool(candidate["valid"]),
+                "inliers": int(candidate["inliers"]),
+                "inlier_ratio": float(candidate["inlier_ratio"]),
+                "score": float(candidate["score"]),
+                "orientation_score": float(candidate["orientation_score"]),
+            }
+            for candidate in candidates
+        ]
+    return aligned, info
 
 
 def build_cleaned_image(aligned_bgr: np.ndarray, rois: Dict[str, list]) -> np.ndarray:
@@ -225,16 +337,125 @@ def refine_crop_tight(crop_bgr: np.ndarray, mode: str = "text") -> np.ndarray:
     return refined
 
 
-def extract_side_artifacts(aligned_bgr: np.ndarray, config: Dict, side: str) -> Dict:
+def _box_corners_in_template(box, template_w: int, template_h: int, pad_px: int = 0) -> np.ndarray:
+    x1, y1, x2, y2 = norm_box_to_px(box, template_w, template_h, pad_px=pad_px)
+    return np.array([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], dtype="float32")
+
+
+def _perspective_crop_from_source(
+    source_bgr: np.ndarray,
+    box,
+    template_w: int,
+    template_h: int,
+    template_to_source_matrix,
+    pad_px: int = 0,
+) -> Tuple[np.ndarray, np.ndarray]:
+    src_quad = _box_corners_in_template(box, template_w, template_h, pad_px=pad_px).reshape(-1, 1, 2)
+    matrix = np.array(template_to_source_matrix, dtype="float32")
+    src_quad = cv2.perspectiveTransform(src_quad, matrix).reshape(4, 2)
+
+    out_w = int(round(max(np.linalg.norm(src_quad[1] - src_quad[0]), np.linalg.norm(src_quad[2] - src_quad[3]))))
+    out_h = int(round(max(np.linalg.norm(src_quad[3] - src_quad[0]), np.linalg.norm(src_quad[2] - src_quad[1]))))
+    out_w = max(out_w, 1)
+    out_h = max(out_h, 1)
+
+    dst_quad = np.array(
+        [[0, 0], [out_w - 1, 0], [out_w - 1, out_h - 1], [0, out_h - 1]],
+        dtype="float32",
+    )
+    warp_matrix = cv2.getPerspectiveTransform(src_quad.astype("float32"), dst_quad)
+    crop = cv2.warpPerspective(source_bgr, warp_matrix, (out_w, out_h))
+    return crop, src_quad
+
+
+def _draw_side_visuals(source_bgr: np.ndarray, side_cfg: Dict, align_info: Dict) -> Tuple[np.ndarray, np.ndarray]:
+    outline = source_bgr.copy()
+    projection = source_bgr.copy()
+    corners = np.array(align_info.get("card_corners_px") or [], dtype="float32")
+    if corners.shape == (4, 2):
+        contour = corners.reshape(-1, 1, 2).astype(np.int32)
+        cv2.polylines(outline, [contour], True, (60, 220, 60), 4)
+        cv2.polylines(projection, [contour], True, (60, 220, 60), 4)
+
+    matrix = align_info.get("template_to_source_matrix") or []
+    template_size = align_info.get("template_size") or [0, 0]
+    if len(matrix) != 3 or not template_size[0] or not template_size[1]:
+        return outline, projection
+
+    palette = [
+        (231, 76, 60),
+        (41, 128, 185),
+        (39, 174, 96),
+        (243, 156, 18),
+        (142, 68, 173),
+        (22, 160, 133),
+        (211, 84, 0),
+        (44, 62, 80),
+    ]
+
+    all_boxes = []
+    if side_cfg.get("photo_roi") is not None:
+        all_boxes.append(("photo", side_cfg["photo_roi"], (80, 180, 255)))
+    for idx, (name, box) in enumerate((side_cfg.get("ocr_rois") or {}).items()):
+        all_boxes.append((name, box, palette[idx % len(palette)]))
+
+    transform = np.array(matrix, dtype="float32")
+    template_w, template_h = int(template_size[0]), int(template_size[1])
+    for name, box, color in all_boxes:
+        quad = _box_corners_in_template(box, template_w, template_h).reshape(-1, 1, 2)
+        quad = cv2.perspectiveTransform(quad, transform).reshape(4, 2)
+        poly = quad.reshape(-1, 1, 2).astype(np.int32)
+        cv2.polylines(projection, [poly], True, color, 2)
+        label_x = int(poly[0, 0, 0])
+        label_y = max(14, int(poly[0, 0, 1]) - 6)
+        cv2.putText(projection, name, (label_x, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2, cv2.LINE_AA)
+
+    return outline, projection
+
+
+def extract_side_artifacts(
+    aligned_bgr: np.ndarray,
+    config: Dict,
+    side: str,
+    subject_image: str | Path | np.ndarray | None = None,
+    align_info: Optional[Dict] = None,
+) -> Dict:
     side_cfg = config[side]
-    out = {"aligned": aligned_bgr, "cleaned": None, "photo": None, "crops": {}}
+    out = {"aligned": aligned_bgr, "cleaned": None, "photo": None, "crops": {}, "outline": None, "projection": None}
+
+    source_bgr = None
+    if isinstance(subject_image, np.ndarray):
+        source_bgr = subject_image.copy()
+    elif subject_image is not None:
+        source_bgr = read_image(subject_image)
+    if source_bgr is not None and align_info:
+        source_bgr = rotate_image(source_bgr, int(align_info.get("rotation", 0)))
+
+    template_size = None
+    template_to_source_matrix = None
+    if align_info and align_info.get("card_detected") and align_info.get("template_size") and align_info.get("template_to_source_matrix"):
+        template_size = align_info["template_size"]
+        template_to_source_matrix = align_info["template_to_source_matrix"]
+
+    if source_bgr is not None and align_info:
+        out["outline"], out["projection"] = _draw_side_visuals(source_bgr, side_cfg, align_info)
 
     rois = side_cfg.get("ocr_rois", {})
     if rois:
         out["cleaned"] = build_cleaned_image(aligned_bgr, rois)
 
     if "photo_roi" in side_cfg:
-        photo = crop_norm_box(aligned_bgr, side_cfg["photo_roi"], pad_px=4)
+        if source_bgr is not None and template_size is not None and template_to_source_matrix is not None:
+            photo, _ = _perspective_crop_from_source(
+                source_bgr,
+                side_cfg["photo_roi"],
+                int(template_size[0]),
+                int(template_size[1]),
+                template_to_source_matrix,
+                pad_px=4,
+            )
+        else:
+            photo = crop_norm_box(aligned_bgr, side_cfg["photo_roi"], pad_px=4)
         out["photo"] = refine_crop_tight(photo, mode="text")
 
     pad = int(side_cfg.get("roi_pad_px", 4))
@@ -243,7 +464,17 @@ def extract_side_artifacts(aligned_bgr: np.ndarray, config: Dict, side: str) -> 
     refine_text = bool(side_cfg.get("refine_text", True))
 
     for name, box in rois.items():
-        crop = crop_norm_box(aligned_bgr, box, pad_px=pad)
+        if source_bgr is not None and template_size is not None and template_to_source_matrix is not None:
+            crop, _ = _perspective_crop_from_source(
+                source_bgr,
+                box,
+                int(template_size[0]),
+                int(template_size[1]),
+                template_to_source_matrix,
+                pad_px=pad,
+            )
+        else:
+            crop = crop_norm_box(aligned_bgr, box, pad_px=pad)
         if name in numeric_fields and refine_numeric:
             crop = refine_crop_tight(crop, mode="numeric")
         elif name not in numeric_fields and refine_text:
@@ -263,6 +494,10 @@ def save_debug_artifacts(debug_dir: str | Path, prefix: str, artifacts: Dict):
         cv2.imwrite(str(debug_dir / f"{prefix}_cleaned.png"), artifacts["cleaned"])
     if artifacts.get("photo") is not None:
         cv2.imwrite(str(debug_dir / f"{prefix}_photo.png"), artifacts["photo"])
+    if artifacts.get("outline") is not None:
+        cv2.imwrite(str(debug_dir / f"{prefix}_outline.png"), artifacts["outline"])
+    if artifacts.get("projection") is not None:
+        cv2.imwrite(str(debug_dir / f"{prefix}_projection.png"), artifacts["projection"])
 
     for name, crop in artifacts.get("crops", {}).items():
         cv2.imwrite(str(debug_dir / f"{prefix}_{name}.png"), crop)

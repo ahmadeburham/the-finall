@@ -58,7 +58,8 @@ def discover_case_images(case_dir: Path) -> Tuple[Path, Path]:
 
 def save_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    payload = pipeline.normalize_output(data)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def main():
@@ -141,8 +142,9 @@ def main():
                 }
             )
 
-    save_json(output_root / "summary.json", {"workspace": str(workspace), "cases": summary})
-    print(json.dumps({"workspace": str(workspace), "cases": summary}, ensure_ascii=False, indent=2))
+    summary_payload = {"workspace": str(workspace), "cases": summary}
+    save_json(output_root / "summary.json", summary_payload)
+    print(json.dumps(pipeline.normalize_output(summary_payload), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

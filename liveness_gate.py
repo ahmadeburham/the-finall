@@ -96,14 +96,28 @@ def check_selfie_liveness(
     selected_summary = _face_summary(selected)
     faces_summary = [_face_summary(face) for face in faces]
 
+    anti_spoof_score = selected_summary.get("antispoof_score")
+    checks = {
+        "single_face": len(faces) == 1,
+        "selected_face_is_real": bool(selected_summary.get("is_real", False)),
+        "anti_spoof_score_present": anti_spoof_score is not None,
+        "anti_spoof_score_ok": anti_spoof_score is None or float(anti_spoof_score) >= 0.5,
+    }
+    passed = bool(
+        checks["single_face"]
+        and checks["selected_face_is_real"]
+        and checks["anti_spoof_score_ok"]
+    )
+
     return {
-        "status": "ok",
-        "passed": bool(selected_summary["is_real"]),
+        "status": "ok" if passed else "failed",
+        "passed": passed,
         "detector_backend": detector_backend,
         "elapsed_seconds": time.perf_counter() - started,
         "face_count": len(faces),
         "faces": faces_summary,
         "selected_face": selected_summary,
+        "checks": checks,
     }
 
 
