@@ -1,8 +1,10 @@
 import argparse
 import json
+import logging
 import os
 import re
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -16,6 +18,52 @@ AR_NUM_MAP = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567
 TO_AR_NUM_MAP = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
 EXPIRY_LABEL = "البطاقه ساريه حتي"
 EXPIRY_LABEL_TOKENS = ["البطاقه", "ساريه", "حتي"]
+
+# ── Detailed Tracing Logger ─────────────────────────────────────────────
+_tracer_logger = None
+
+def setup_tracer(log_file: str = None) -> logging.Logger:
+    global _tracer_logger
+    if _tracer_logger is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_path = log_file or f"ocr_trace_{timestamp}.log"
+        _tracer_logger = logging.getLogger("ocr_tracer")
+        _tracer_logger.setLevel(logging.DEBUG)
+        
+        # File handler
+        fh = logging.FileHandler(log_path, encoding="utf-8", mode="w")
+        fh.setLevel(logging.DEBUG)
+        
+        # Console handler
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        
+        # Formatter
+        formatter = logging.Formatter(
+            "%(asctime)s.%(msecs)03d | %(levelname)-8s | %(funcName)-25s | %(message)s",
+            datefmt="%H:%M:%S"
+        )
+        fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
+        
+        _tracer_logger.addHandler(fh)
+        _tracer_logger.addHandler(ch)
+        
+        _tracer_logger.info("=== OCR TRACING STARTED ===")
+    return _tracer_logger
+
+def trace(func_name: str, msg: str, level: str = "debug"):
+    logger = setup_tracer()
+    getattr(logger, level)(f"[{func_name}] {msg}")
+
+def trace_var(func_name: str, var_name: str, value, level: str = "debug"):
+    logger = setup_tracer()
+    if isinstance(value, (list, tuple)):
+        logger.log(getattr(logging, level.upper()), f"[{func_name}] {var_name}: len={len(value)} | value={str(value)[:200]}")
+    elif isinstance(value, dict):
+        logger.log(getattr(logging, level.upper()), f"[{func_name}] {var_name}: keys={list(value.keys())[:5]} | items={len(value)}")
+    else:
+        logger.log(getattr(logging, level.upper()), f"[{func_name}] {var_name}: {str(value)[:200]}")
 
 
 def build_ocr():
@@ -269,33 +317,49 @@ def numeric_field(lines: List[dict], prefer_len: int | None = None) -> str:
 
 
 def _best_lines_for_text(image_bgr: np.ndarray) -> Tuple[List[dict], int, float]:
+    trace("_best_lines_for_text", "STARTED")
     best_lines = []
     best_score = -1e18
     best_idx = -1
     for idx, variant in enumerate(preprocess_text_block(image_bgr)):
+        trace_var("_best_lines_for_text", f"variant_{idx}_shape", variant.shape)
         lines = _ocr_lines_from_image(variant)
+        trace_var("_best_lines_for_text", f"variant_{idx}_lines", lines)
         score = _score_text(lines)
+        trace_var("_best_lines_for_text", f"variant_{idx}_score", score)
         if score > best_score:
             best_score = score
             best_lines = lines
             best_idx = idx
+            trace("_best_lines_for_text", f"New best variant {idx}")
+    trace_var("_best_lines_for_text", "best_idx", best_idx)
+    trace_var("_best_lines_for_text", "best_score", best_score)
     return best_lines, best_idx, float(best_score)
 
 
 def _best_numeric_from_crop(image_bgr: np.ndarray, prefer_len: int | None = None) -> Tuple[str, List[dict], int, float]:
+    trace("_best_numeric_from_crop", f"STARTED prefer_len={prefer_len}")
     best_text = ""
     best_lines = []
     best_score = -1e18
     best_idx = -1
     for idx, variant in enumerate(preprocess_numeric_block(image_bgr)):
+        trace_var("_best_numeric_from_crop", f"variant_{idx}_shape", variant.shape)
         lines = _ocr_lines_from_image(variant)
+        trace_var("_best_numeric_from_crop", f"variant_{idx}_lines", lines)
         score = _score_numeric(lines, prefer_len=prefer_len)
+        trace_var("_best_numeric_from_crop", f"variant_{idx}_score", score)
         text = numeric_field(lines, prefer_len=prefer_len)
+        trace_var("_best_numeric_from_crop", f"variant_{idx}_text", text)
         if score > best_score:
             best_score = score
             best_text = text
             best_lines = lines
             best_idx = idx
+            trace("_best_numeric_from_crop", f"New best variant {idx}")
+    trace_var("_best_numeric_from_crop", "best_idx", best_idx)
+    trace_var("_best_numeric_from_crop", "best_text", best_text)
+    trace_var("_best_numeric_from_crop", "best_score", best_score)
     return best_text, best_lines, best_idx, float(best_score)
 
 
@@ -491,36 +555,182 @@ def extract_text_from_image(input_path: str) -> dict:
 
 
 def extract_fields_from_crops(front_crops: Dict[str, np.ndarray], back_crops: Dict[str, np.ndarray] | None = None) -> Dict:
+    trace("extract_fields_from_crops", "STARTED")
     os.environ.setdefault("PADDLE_PDX_MODEL_SOURCE", "BOS")
     os.environ.setdefault("PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK", "True")
+    
+    trace_var("extract_fields_from_crops", "front_crops_keys", list(front_crops.keys()))
+    trace_var("extract_fields_from_crops", "back_crops_keys", list(back_crops.keys()) if back_crops else [])
 
+    # ── front side ────────────────────────────────────────────────────────────
+    trace("extract_fields_from_crops", "Processing front side fields")
     name_lines, _, _ = _best_lines_for_text(front_crops["name"]) if "name" in front_crops else ([], -1, 0.0)
+    trace_var("extract_fields_from_crops", "name_lines", name_lines)
+    
     address_lines, _, _ = _best_lines_for_text(front_crops["address"]) if "address" in front_crops else ([], -1, 0.0)
+    trace_var("extract_fields_from_crops", "address_lines", address_lines)
+    
     id_number, id_lines, _, _ = _best_numeric_from_crop(front_crops["id_number"], prefer_len=14) if "id_number" in front_crops else ("", [], -1, 0.0)
+    trace_var("extract_fields_from_crops", "id_number_initial", id_number)
+    trace_var("extract_fields_from_crops", "id_lines", id_lines)
+    
     birth_date, birth_lines, _, _ = _best_numeric_from_crop(front_crops["birth_date"], prefer_len=8) if "birth_date" in front_crops else ("", [], -1, 0.0)
+    trace_var("extract_fields_from_crops", "birth_date_initial", birth_date)
 
     name = merge_lines(name_lines)
     address = merge_lines(address_lines)
 
-    if not birth_date and id_number:
-        birth_date = infer_birth_date_from_id(id_number)
+    # FIX 1a: century correction — the front card's brown stain makes the first
+    # digit unreliable.  If the implied birth year is implausible (> 100 years
+    # ago or in the future), try alternative century codes until we find one that
+    # places the birth year within a plausible 0-100 year window.
+    import datetime as _dt
+    _id_partial = only_digits(id_number)
+    trace_var("extract_fields_from_crops", "_id_partial", _id_partial)
+    
+    if 7 <= len(_id_partial):
+        _bd0 = infer_birth_date_from_id(_id_partial)
+        trace_var("extract_fields_from_crops", "_bd0", _bd0)
+        if _bd0:
+            _age0 = _dt.datetime.now().year - int(_bd0[:4])
+            trace_var("extract_fields_from_crops", "_age0", _age0)
+            if not (0 <= _age0 <= 100):
+                trace("extract_fields_from_crops", "Age invalid, trying century correction")
+                for _c in ("3", "2", "1"):
+                    _alt = _c + _id_partial[1:]
+                    trace_var("extract_fields_from_crops", f"trying_century_{_c}", _alt)
+                    _alt_bd = infer_birth_date_from_id(_alt)
+                    if _alt_bd:
+                        _alt_age = _dt.datetime.now().year - int(_alt_bd[:4])
+                        trace_var("extract_fields_from_crops", f"alt_age_{_c}", _alt_age)
+                        if 0 <= _alt_age <= 100:
+                            id_number = _alt
+                            trace("extract_fields_from_crops", f"Century corrected to {_c}")
+                            break
+    trace_var("extract_fields_from_crops", "id_number_after_century_fix", id_number)
 
-    front_full_text = normalize_arabic_text(" ".join(filter(None, [name, address, id_number, birth_date])))
-
+    # ── back side ─────────────────────────────────────────────────────────────
     back_full_text_parts = []
     expiry_date = ""
     expiry_lines: List[dict] = []
+    issue_date = ""
+    profession = ""
+    gender = ""
+    religion = ""
+    marital_status = ""
 
     if back_crops:
+        trace("extract_fields_from_crops", "Processing back side fields")
+        # FIX 1b: recover trailing ID digits from the RIGHT EDGE of the back
+        # id_number crop.  The Tutankhamun watermark occupies the centre of the
+        # row; the rightmost 25 % (x ≥ 75 %) contains only the last few digits
+        # and the eagle emblem — no statue interference.  A 3× upscale makes the
+        # isolated Arabic-Indic digit characters large enough to detect reliably.
+        if "back_id_number" in back_crops and len(only_digits(id_number)) < 14:
+            _needed = 14 - len(only_digits(id_number))
+            trace_var("extract_fields_from_crops", "back_fix_needed", _needed)
+            _bi = back_crops["back_id_number"]
+            _bw = _bi.shape[1]
+            trace_var("extract_fields_from_crops", "back_crop_width", _bw)
+            _rs = _bi[:, int(_bw * 0.75):]
+            trace_var("extract_fields_from_crops", "right_strip_shape", _rs.shape)
+            _rs_up = cv2.resize(_rs, (_rs.shape[1] * 3, _rs.shape[0] * 3),
+                                 interpolation=cv2.INTER_CUBIC)
+            _rs_lines = _ocr_lines_from_image(_rs_up)
+            trace_var("extract_fields_from_crops", "right_strip_lines", _rs_lines)
+            _rs_digits = only_digits(
+                " ".join(normalize_digits(l.get("text", "")) for l in _rs_lines)
+            )
+            trace_var("extract_fields_from_crops", "right_strip_digits", _rs_digits)
+            if _rs_digits:
+                for _sl in (_needed, _needed + 1, _needed + 2):
+                    if len(_rs_digits) >= _sl:
+                        _suffix = _rs_digits[-_sl:][:_needed]
+                        _cand = only_digits(id_number) + _suffix
+                        trace_var("extract_fields_from_crops", f"trying_suffix_{_sl}", _suffix)
+                        trace_var("extract_fields_from_crops", f"candidate_{_sl}", _cand)
+                        if len(_cand) == 14:
+                            # Accept 14-digit candidates even if birth date fails initially
+                            # Century correction will fix it later
+                            id_number = _cand
+                            trace("extract_fields_from_crops", f"Back fix succeeded with suffix length {_sl}")
+                            break
+                if len(only_digits(id_number)) < 14 and 1 <= len(_rs_digits) <= _needed:
+                    _suffix = _rs_digits.zfill(_needed)[-_needed:]
+                    _cand = only_digits(id_number) + _suffix
+                    trace_var("extract_fields_from_crops", "fallback_suffix", _suffix)
+                    trace_var("extract_fields_from_crops", "fallback_candidate", _cand)
+                    if len(_cand) == 14:
+                        id_number = _cand
+                        trace("extract_fields_from_crops", "Back fix succeeded with fallback")
+        trace_var("extract_fields_from_crops", "id_number_final", id_number)
+
+        # NEW: extract dedicated back-card text fields
+        if "back_issue_date" in back_crops:
+            issue_date_lines, _, _ = _best_lines_for_text(back_crops["back_issue_date"])
+            _raw_issue = normalize_digits(merge_lines(issue_date_lines))
+            # primary: actual separator (/, -, \)
+            _im = re.search(r"((?:19|20)\d{2})\s*[/\\\-]\s*(\d{1,2})", _raw_issue)
+            if not _im:
+                # fallback: '/' is commonly OCR'd as '1' on low-contrast crops
+                _im = re.search(r"((?:19|20)\d{2})[1l](\d{2})", _raw_issue)
+            if _im:
+                _iy, _imm = _im.group(1), _im.group(2).zfill(2)
+                if 1 <= int(_imm) <= 12:
+                    issue_date = to_arabic_digits(_iy) + "/" + to_arabic_digits(_imm)
+        if "profession" in back_crops:
+            profession_lines, _, _ = _best_lines_for_text(back_crops["profession"])
+            profession = merge_lines(profession_lines)
+        if "gender" in back_crops:
+            gender_lines, _, _ = _best_lines_for_text(back_crops["gender"])
+            gender = merge_lines(gender_lines)
+            gender = re.sub(r"[دنر]كر", "ذكر", gender)
+        if "religion" in back_crops:
+            religion_lines, _, _ = _best_lines_for_text(back_crops["religion"])
+            religion = merge_lines(religion_lines)
+        if "marital_status" in back_crops:
+            marital_lines, _, _ = _best_lines_for_text(back_crops["marital_status"])
+            marital_status = merge_lines(marital_lines)
+
+        # build back_full_text from back_text fallback crop
         for crop_name, crop in back_crops.items():
+            if crop_name != "back_text":
+                continue
             lines, _, _ = _best_lines_for_text(crop)
             txt = merge_lines(lines)
             if txt:
                 back_full_text_parts.append(txt)
 
-        expiry_source = back_crops.get("expiry_date") or back_crops.get("back_text")
+        expiry_source = back_crops.get("expiry_date")
+        if expiry_source is None:
+            expiry_source = back_crops.get("back_text")
         if expiry_source is not None:
             expiry_date, expiry_lines, _, _ = _best_expiry_from_crop(expiry_source)
+
+    # FIX 3: cross-validate expiry with back_full_text (text pipeline is more
+    # reliable than numeric pipeline for mixed Arabic+digit lines like the expiry row).
+    back_full_text_str = normalize_arabic_text(" ".join(back_full_text_parts))
+    ft_expiry = _extract_yyyymmdd_ascii(back_full_text_str)
+    if ft_expiry:
+        expiry_date = to_arabic_digits(ft_expiry)
+
+    # FIX 2: if birth_date is absent OR not a valid YYYYMMDD (holographic foil
+    # makes the front ROI unreadable), infer it from the national ID number.
+    # Fix 1 must run first so we use the corrected 14-digit ID here.
+    trace_var("extract_fields_from_crops", "birth_date_before_inference", birth_date)
+    if (not birth_date or not is_valid_yyyymmdd(birth_date)) and id_number:
+        trace("extract_fields_from_crops", "Birth date invalid/missing, inferring from ID")
+        inferred = infer_birth_date_from_id(id_number)
+        trace_var("extract_fields_from_crops", "birth_date_inferred", inferred)
+        if inferred:
+            birth_date = inferred
+            trace("extract_fields_from_crops", "Birth date inferred successfully")
+
+    front_full_text = normalize_arabic_text(" ".join(filter(None, [name, address, id_number, birth_date])))
+    
+    trace("extract_fields_from_crops", "COMPLETED - returning results")
+    trace_var("extract_fields_from_crops", "final_id_number", id_number)
+    trace_var("extract_fields_from_crops", "final_birth_date", birth_date)
 
     return {
         "name": name,
@@ -528,8 +738,13 @@ def extract_fields_from_crops(front_crops: Dict[str, np.ndarray], back_crops: Di
         "id_number": id_number,
         "birth_date": birth_date,
         "expiry_date": expiry_date,
+        "issue_date": issue_date,
+        "profession": profession,
+        "gender": gender,
+        "religion": religion,
+        "marital_status": marital_status,
         "front_full_text": front_full_text,
-        "back_full_text": normalize_arabic_text(" ".join(back_full_text_parts)),
+        "back_full_text": back_full_text_str,
         "raw": {
             "name_lines": name_lines,
             "address_lines": address_lines,

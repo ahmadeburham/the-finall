@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>التحقق من الهوية الوطنية</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+
+    /* Step dots */
+    .dot-active  { background:#2563eb; color:#fff; }
+    .dot-done    { background:#16a34a; color:#fff; }
+    .dot-pending { background:#e5e7eb; color:#9ca3af; }
+
+    /* Drag-and-drop zone */
+    .drop-zone { transition: border-color .2s, background .2s; }
+    .drop-zone.over { border-color:#2563eb; background:#eff6ff; }
+
+    /* Camera overlay */
+    #face-oval {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-55%);
+      width:200px; height:260px;
+      border:3px solid rgba(255,255,255,.85);
+      border-radius:50%;
+      box-shadow:0 0 0 9999px rgba(0,0,0,.35);
+      pointer-events:none;
+    }
+    #countdown-num {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      font-size:5.5rem; font-weight:900;
+      color:#fff; text-shadow:0 2px 12px rgba(0,0,0,.7);
+      pointer-events:none; display:none;
+    }
+
+    /* Spinner */
+    .spin {
+      border:4px solid #e5e7eb;
+      border-top-color:#2563eb;
+      border-radius:50%; width:48px; height:48px;
+      animation:rotate .75s linear infinite;
+    }
+    @keyframes rotate { to { transform:rotate(360deg); } }
+
+    /* Pulse badge */
+    @keyframes pulse-once {
+      0%,100% { transform:scale(1); }
+      50%      { transform:scale(1.08); }
+    }
+    .pulse { animation:pulse-once .5s ease; }
+
+    /* RTL field text */
+    .field-val { direction:rtl; unicode-bidi:embed; }
+    .field-val-ltr { direction:ltr; unicode-bidi:embed; font-family:monospace; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<header class="bg-gradient-to-l from-blue-950 to-blue-700 text-white shadow-xl">
+  <div class="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
+    <span class="text-3xl">🪪</span>
+    <div class="text-right flex-1">
+      <h1 class="text-xl font-extrabold tracking-wide">نظام التحقق من بطاقة الهوية الوطنية</h1>
+      <p class="text-blue-300 text-xs mt-0.5">Egyptian National ID — Liveness & Face Verification</p>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════ STEP INDICATOR ═══════════════════════ -->
+<div class="max-w-3xl mx-auto px-6 pt-7 pb-3">
+  <div class="flex items-center justify-center gap-3" dir="ltr">
+
+    <div class="flex items-center gap-2">
+      <div id="dot1" class="dot-active w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300">1</div>
+      <span class="text-sm font-semibold text-gray-700 hidden sm:block">رفع البطاقة</span>
+    </div>
+
+    <div class="flex-1 max-w-12 h-px bg-gray-300"></div>
+
+    <div class="flex items-center gap-2">
+      <div id="dot2" class="dot-pending w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300">2</div>
+      <span class="text-sm font-semibold text-gray-700 hidden sm:block">كاميرا السيلفي</span>
+    </div>
+
+    <div class="flex-1 max-w-12 h-px bg-gray-300"></div>
+
+    <div class="flex items-center gap-2">
+      <div id="dot3" class="dot-pending w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300">3</div>
+      <span class="text-sm font-semibold text-gray-700 hidden sm:block">النتائج</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ MAIN CONTENT ══════════════════════════ -->
+<main class="max-w-3xl mx-auto px-4 pb-20 space-y-4">
+
+  <!-- ─────────────────── STEP 1 : Card Upload ─────────────────── -->
+  <section id="step1">
+    <div class="bg-white rounded-2xl shadow border border-slate-200 p-7">
+      <h2 class="text-lg font-bold text-gray-800 text-right mb-1">📋 الخطوة ١ — رفع صور البطاقة</h2>
+      <p class="text-sm text-gray-500 text-right mb-6">ارفع صورة الوجه الأمامي والخلفي لبطاقة الهوية الوطنية</p>
+
+      <div class="grid grid-cols-2 gap-5">
+
+        <!-- Front -->
+        <div>
+          <p class="text-sm font-semibold text-gray-700 text-right mb-2">الوجه الأمامي</p>
+          <div id="zone-front"
+               class="drop-zone border-2 border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50"
+               onclick="document.getElementById('inp-front').click()">
+            <div id="placeholder-front">
+              <div class="text-4xl mb-1">🪪</div>
+              <p class="text-xs text-gray-500">اضغط أو اسحب الصورة</p>
+            </div>
+            <img id="thumb-front" class="hidden max-h-36 mx-auto rounded-lg object-contain"/>
+          </div>
+          <input id="inp-front" type="file" accept="image/*" class="hidden" onchange="onCardFile('front',this)">
+        </div>
+
+        <!-- Back -->
+        <div>
+          <p class="text-sm font-semibold text-gray-700 text-right mb-2">الوجه الخلفي</p>
+          <div id="zone-back"
+               class="drop-zone border-2 border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50"
+               onclick="document.getElementById('inp-back').click()">
+            <div id="placeholder-back">
+              <div class="text-4xl mb-1">🪪</div>
+              <p class="text-xs text-gray-500">اضغط أو اسحب الصورة</p>
+            </div>
+            <img id="thumb-back" class="hidden max-h-36 mx-auto rounded-lg object-contain"/>
+          </div>
+          <input id="inp-back" type="file" accept="image/*" class="hidden" onchange="onCardFile('back',this)">
+        </div>
+
+      </div><!-- /grid -->
+
+      <div class="mt-7 flex justify-start">
+        <button id="btn-to2" onclick="goStep(2)" disabled
+          class="flex items-center gap-2 bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold px-7 py-3 rounded-xl hover:bg-blue-700 transition-all">
+          التالي: التقاط السيلفي
+          <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── STEP 2 : Selfie Capture ─────────────── -->
+  <section id="step2" class="hidden">
+    <div class="bg-white rounded-2xl shadow border border-slate-200 p-7">
+      <h2 class="text-lg font-bold text-gray-800 text-right mb-1">🤳 الخطوة ٢ — التقاط صورة السيلفي</h2>
+      <p class="text-sm text-gray-500 text-right mb-5">ضع وجهك داخل الإطار البيضاوي وانظر مباشرة للكاميرا، ثم اضغط التقاط</p>
+
+      <div class="flex flex-col items-center gap-4">
+
+        <!-- Video frame -->
+        <div class="relative rounded-2xl overflow-hidden bg-black" style="width:460px;max-width:100%;height:340px;">
+          <video id="vid" autoplay muted playsinline class="w-full h-full object-cover"></video>
+          <img  id="snap-img" class="hidden absolute inset-0 w-full h-full object-cover"/>
+          <div id="face-oval"></div>
+          <div id="countdown-num"></div>
+        </div>
+
+        <!-- Status line -->
+        <p id="cam-status" class="text-sm font-medium text-blue-600">جاري تشغيل الكاميرا…</p>
+
+        <!-- Action buttons -->
+        <div class="flex gap-3">
+          <button id="btn-capture" onclick="capturePhoto()" disabled
+            class="flex items-center gap-2 bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-700 transition-all">
+            📸 التقاط
+          </button>
+          <button id="btn-retake" onclick="retake()" class="hidden flex items-center gap-2 bg-slate-200 text-gray-700 font-semibold px-6 py-3 rounded-xl hover:bg-slate-300 transition-all">
+            🔄 إعادة
+          </button>
+        </div>
+
+      </div><!-- /flex -->
+
+      <div class="mt-7 flex justify-between items-center">
+        <button onclick="goStep(1)" class="text-sm text-gray-500 hover:text-gray-700 font-medium flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          العودة
+        </button>
+        <button id="btn-submit" onclick="submitAll()" disabled
+          class="flex items-center gap-2 bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold px-7 py-3 rounded-xl hover:bg-green-700 transition-all">
+          ✅ بدء التحقق الكامل
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── STEP 3 : Results ────────────────────── -->
+  <section id="step3" class="hidden">
+
+    <!-- Loading -->
+    <div id="res-loading" class="bg-white rounded-2xl shadow border border-slate-200 p-14 flex flex-col items-center gap-5">
+      <div class="spin"></div>
+      <p class="text-gray-700 font-semibold text-lg">جاري التحقق…</p>
+      <p id="stage-txt" class="text-sm text-gray-400">تحليل بطاقة الهوية…</p>
+      <p class="text-xs text-gray-400 mt-1">(قد تستغرق العملية ٣–٦ دقائق)</p>
+    </div>
+
+    <!-- Results (shown after response) -->
+    <div id="res-body" class="hidden space-y-5">
+
+      <!-- Overall verdict -->
+      <div id="verdict-box" class="rounded-2xl p-8 text-center text-white shadow-lg pulse">
+        <div id="verdict-icon" class="text-6xl mb-2"></div>
+        <h2 id="verdict-title" class="text-3xl font-extrabold"></h2>
+        <p  id="verdict-sub"   class="text-base mt-2 opacity-90"></p>
+      </div>
+
+      <!-- Gate steps timeline -->
+      <div class="bg-white rounded-2xl border shadow-sm p-5">
+        <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider text-right mb-4">مراحل التحقق</p>
+        <div id="gate-timeline" class="flex items-start justify-center gap-1" dir="ltr"></div>
+      </div>
+
+      <!-- Status row -->
+      <div class="grid grid-cols-2 gap-4">
+
+        <!-- Liveness card -->
+        <div class="bg-white rounded-2xl border shadow-sm p-5">
+          <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider text-right mb-2">كشف الحيوية</p>
+          <div class="flex items-center justify-end gap-3">
+            <div class="text-right">
+              <p id="liv-label" class="text-xl font-bold"></p>
+              <p id="liv-score" class="text-xs text-gray-500 mt-0.5"></p>
+            </div>
+            <span id="liv-icon" class="text-3xl"></span>
+          </div>
+        </div>
+
+        <!-- Face match card -->
+        <div class="bg-white rounded-2xl border shadow-sm p-5">
+          <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider text-right mb-2">مطابقة الوجه</p>
+          <div class="flex items-center justify-end gap-3">
+            <div class="text-right">
+              <p id="fm-label" class="text-xl font-bold"></p>
+              <p id="fm-score" class="text-xs text-gray-500 mt-0.5"></p>
+            </div>
+            <span id="fm-icon" class="text-3xl"></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- OCR fields -->
+      <div id="ocr-section" class="hidden bg-white rounded-2xl border shadow-sm p-6">
+        <h3 class="text-base font-bold text-gray-800 text-right pb-3 mb-4 border-b border-gray-100">
+          📄 بيانات بطاقة الهوية المستخرجة
+        </h3>
+        <div class="grid grid-cols-2 gap-x-8 gap-y-5">
+
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">الاسم الكامل</p>
+            <p id="r-name"    class="field-val font-bold text-gray-800 text-base"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">رقم الهوية الوطنية</p>
+            <p id="r-id"      class="field-val-ltr font-bold text-blue-700 text-lg tracking-widest"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">تاريخ الميلاد</p>
+            <p id="r-birth"   class="field-val-ltr font-semibold text-gray-700"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">تاريخ الإصدار</p>
+            <p id="r-issue"   class="field-val font-semibold text-gray-700"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">تاريخ الانتهاء</p>
+            <p id="r-expiry"  class="field-val-ltr font-semibold text-gray-700"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">المهنة</p>
+            <p id="r-prof"    class="field-val font-semibold text-gray-700"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">الجنس</p>
+            <p id="r-gender"  class="field-val font-semibold text-gray-700"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">الديانة</p>
+            <p id="r-rel"     class="field-val font-semibold text-gray-700"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">الحالة الاجتماعية</p>
+            <p id="r-mar"     class="field-val font-semibold text-gray-700"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-400 mb-1">العنوان</p>
+            <p id="r-addr"    class="field-val font-semibold text-gray-700"></p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Error box (hidden unless error) -->
+      <div id="err-box" class="hidden bg-red-50 border border-red-200 rounded-2xl p-5 text-right">
+        <p class="text-sm font-bold text-red-700 mb-1">⚠️ تفاصيل الخطأ</p>
+        <pre id="err-txt" class="text-xs text-red-600 whitespace-pre-wrap font-mono"></pre>
+      </div>
+
+      <!-- Reset -->
+      <div class="flex justify-center pt-2">
+        <button onclick="resetAll()"
+          class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-gray-700 font-semibold px-8 py-3 rounded-xl transition-all">
+          🔄 بدء تحقق جديد
+        </button>
+      </div>
+
+    </div><!-- /res-body -->
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════ SCRIPTS ═══════════════════════════ -->
+<script>
+// ─── State ────────────────────────────────────────────────────────
+let frontFile = null, backFile = null, selfieBlob = null;
+let camStream  = null;
+let stageTimer = null;
+
+// ─── Step navigation ──────────────────────────────────────────────
+function goStep(n) {
+  ['step1','step2','step3'].forEach((id,i) => {
+    document.getElementById(id).classList.toggle('hidden', i+1 !== n);
+  });
+  for (let i = 1; i <= 3; i++) {
+    const d = document.getElementById('dot'+i);
+    d.className = 'w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ' +
+      (i < n ? 'dot-done' : i === n ? 'dot-active' : 'dot-pending');
+  }
+  if (n === 2) startCamera();
+  if (n !== 2 && camStream) stopCamera();
+}
+
+// ─── Step 1: card file handling ───────────────────────────────────
+function onCardFile(side, inp) {
+  const file = inp.files[0];
+  if (!file) return;
+  if (side === 'front') frontFile = file; else backFile = file;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('placeholder-' + side).classList.add('hidden');
+    const img = document.getElementById('thumb-' + side);
+    img.src = e.target.result;
+    img.classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+  document.getElementById('btn-to2').disabled = !(frontFile && backFile);
+}
+
+// Drag-and-drop for both zones
+['front','back'].forEach(side => {
+  const zone = document.getElementById('zone-'+side);
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const inp = document.getElementById('inp-'+side);
+      // DataTransfer trick to set files
+      const dt = new DataTransfer(); dt.items.add(file);
+      inp.files = dt.files;
+      onCardFile(side, inp);
+    }
+  });
+});
+
+// ─── Step 2: Camera ───────────────────────────────────────────────
+async function startCamera() {
+  const vid = document.getElementById('vid');
+  const st  = document.getElementById('cam-status');
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { width:{ideal:640}, height:{ideal:480}, facingMode:'user' },
+      audio: false
+    });
+    vid.srcObject = camStream;
+    await vid.play();
+    document.getElementById('btn-capture').disabled = false;
+    st.textContent = '✅ الكاميرا جاهزة — ضع وجهك داخل الإطار واضغط التقاط';
+    st.className = 'text-sm font-medium text-green-600';
+  } catch(err) {
+    st.textContent = '❌ لا يمكن الوصول إلى الكاميرا: ' + err.message;
+    st.className = 'text-sm font-medium text-red-600';
+  }
+}
+
+function stopCamera() {
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+}
+
+function capturePhoto() {
+  const vid = document.getElementById('vid');
+  const canvas = document.createElement('canvas');
+  canvas.width  = vid.videoWidth  || 640;
+  canvas.height = vid.videoHeight || 480;
+  canvas.getContext('2d').drawImage(vid, 0, 0);
+
+  // Start a 3-2-1 countdown then finalize
+  let count = 3;
+  const numEl = document.getElementById('countdown-num');
+  numEl.style.display = 'block';
+  numEl.textContent = count;
+  document.getElementById('btn-capture').disabled = true;
+
+  const tick = setInterval(() => {
+    count--;
+    if (count > 0) {
+      numEl.textContent = count;
+    } else {
+      clearInterval(tick);
+      numEl.style.display = 'none';
+      // Re-draw at capture moment
+      canvas.getContext('2d').drawImage(vid, 0, 0);
+      canvas.toBlob(blob => {
+        selfieBlob = blob;
+        const snap = document.getElementById('snap-img');
+        snap.src = URL.createObjectURL(blob);
+        snap.classList.remove('hidden');
+        document.getElementById('vid').style.visibility = 'hidden';
+        document.getElementById('face-oval').style.display = 'none';
+        document.getElementById('btn-capture').classList.add('hidden');
+        document.getElementById('btn-retake').classList.remove('hidden');
+        document.getElementById('btn-submit').disabled = false;
+        document.getElementById('cam-status').textContent = '📸 تم التقاط الصورة — اضغط "بدء التحقق الكامل"';
+        document.getElementById('cam-status').className = 'text-sm font-medium text-green-700';
+      }, 'image/jpeg', 0.93);
+    }
+  }, 900);
+}
+
+function retake() {
+  selfieBlob = null;
+  document.getElementById('snap-img').classList.add('hidden');
+  document.getElementById('vid').style.visibility = 'visible';
+  document.getElementById('face-oval').style.display = '';
+  document.getElementById('btn-capture').classList.remove('hidden');
+  document.getElementById('btn-capture').disabled = false;
+  document.getElementById('btn-retake').classList.add('hidden');
+  document.getElementById('btn-submit').disabled = true;
+  document.getElementById('cam-status').textContent = '✅ الكاميرا جاهزة — ضع وجهك داخل الإطار واضغط التقاط';
+  document.getElementById('cam-status').className = 'text-sm font-medium text-green-600';
+}
+
+// ─── Step 3: Submit & Show Results ────────────────────────────────
+async function submitAll() {
+  goStep(3);
+  stopCamera();
+
+  // Cycle through stage messages while waiting
+  const stages = [
+    'تحليل بطاقة الهوية…',
+    'محاذاة البطاقة مع القالب…',
+    'استخراج الحقول بالـ OCR…',
+    'مطابقة الوجه…',
+    'فحص الحيوية…',
+  ];
+  let si = 0;
+  const stEl = document.getElementById('stage-txt');
+  stageTimer = setInterval(() => {
+    si = Math.min(si + 1, stages.length - 1);
+    stEl.textContent = stages[si];
+  }, 35000);
+
+  try {
+    const fd = new FormData();
+    fd.append('front',  frontFile,  'front.jpg');
+    fd.append('back',   backFile,   'back.jpg');
+    fd.append('selfie', selfieBlob, 'selfie.jpg');
+
+    const resp = await fetch('/verify', { method:'POST', body:fd });
+    clearInterval(stageTimer);
+    const data = await resp.json();
+    renderResults(data);
+  } catch(err) {
+    clearInterval(stageTimer);
+    renderError(err.message);
+  }
+}
+
+// ── Gate metadata ─────────────────────────────────────────────
+const GATES = [
+  { key: 'alignment',   label: 'التحقق من البطاقة' },
+  { key: 'ocr',         label: 'استخراج البيانات'  },
+  { key: 'face_match',  label: 'مطابقة الوجه'      },
+  { key: 'liveness',    label: 'فحص الحيوية'       },
+];
+
+const STAGE_GATE = {
+  alignment_failed: 1,
+  invalid_card:     2,
+  face_match_failed:3,
+  liveness_failed:  4,
+  completed:        null,
+  error:            null,
+};
+
+function renderResults(data) {
+  document.getElementById('res-loading').classList.add('hidden');
+  document.getElementById('res-body').classList.remove('hidden');
+
+  const stage    = data.stage || 'error';
+  const failGate = STAGE_GATE[stage] ?? null;
+  const pass     = data.overall_passed === true;
+
+  // ── Overall verdict banner ────────────────────────────────────
+  const vBox = document.getElementById('verdict-box');
+  vBox.className = 'rounded-2xl p-8 text-center text-white shadow-lg pulse ' +
+    (pass ? 'bg-green-600' : 'bg-red-600');
+  document.getElementById('verdict-icon').textContent  = pass ? '✅' : '❌';
+  document.getElementById('verdict-title').textContent = pass
+    ? 'التحقق ناجح'
+    : ({
+        alignment_failed:  'بطاقة غير مدعومة',
+        invalid_card:      'بطاقة غير صالحة',
+        face_match_failed: 'الوجه غير مطابق',
+        liveness_failed:   'فشل فحص الحيوية',
+      }[stage] || 'التحقق فشل');
+  document.getElementById('verdict-sub').textContent = pass
+    ? 'الهوية صحيحة — الشخص حيّ ووجهه مطابق'
+    : (data.message_ar || 'لم يتم اجتياز جميع مراحل التحقق');
+
+  // ── Gate steps timeline ───────────────────────────────────────
+  const tl = document.getElementById('gate-timeline');
+  tl.innerHTML = '';
+  GATES.forEach((g, i) => {
+    const gNum     = i + 1;
+    const ran      = failGate === null || gNum <= failGate;
+    const skipped  = failGate !== null && gNum > failGate;
+    const failed   = failGate === gNum;
+    const ok       = ran && !failed;
+
+    const icon  = skipped ? '⏭️' : failed ? '❌' : '✅';
+    const color = skipped
+      ? 'bg-gray-100 text-gray-400'
+      : failed
+      ? 'bg-red-50 border-red-200 text-red-700'
+      : 'bg-green-50 border-green-200 text-green-700';
+
+    tl.innerHTML += `
+      <div class="flex-1 flex flex-col items-center gap-1 px-1">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl
+                    border-2 ${skipped ? 'border-gray-200 bg-gray-50' : failed ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}">
+          ${icon}
+        </div>
+        <span class="text-xs font-semibold text-center leading-tight
+                     ${skipped ? 'text-gray-400' : failed ? 'text-red-600' : 'text-green-700'}">
+          ${g.label}
+        </span>
+      </div>
+      ${i < 3 ? '<div class="flex-none w-6 h-px bg-gray-300 mt-5"></div>' : ''}
+    `;
+  });
+
+  // ── Liveness card ─────────────────────────────────────────────
+  const liv   = data.liveness || {};
+  const livOK = liv.passed === true;
+  const livSkip = failGate !== null && failGate < 4;
+  document.getElementById('liv-icon').textContent  = livSkip ? '⏭️' : livOK ? '✅' : '❌';
+  document.getElementById('liv-label').textContent = livSkip ? 'لم يُنفَّذ' : livOK ? 'شخص حقيقي' : 'لم يُتحقق';
+  document.getElementById('liv-label').className   = 'text-xl font-bold ' +
+    (livSkip ? 'text-gray-400' : livOK ? 'text-green-600' : 'text-red-600');
+  const anti = (liv.selected_face || {}).antispoof_score;
+  document.getElementById('liv-score').textContent =
+    (!livSkip && anti != null) ? 'درجة الحيوية: ' + (anti * 100).toFixed(1) + '%' : '';
+
+  // ── Face match card ───────────────────────────────────────────
+  const fmData = data.face_match || {};
+  const fmOK   = fmData.passed === true;
+  const fmSkip = failGate !== null && failGate < 3;
+  document.getElementById('fm-icon').textContent  = fmSkip ? '⏭️' : fmOK ? '✅' : '❌';
+  document.getElementById('fm-label').textContent = fmSkip ? 'لم يُنفَّذ' : fmOK ? 'الوجه مطابق' : 'الوجه غير مطابق';
+  document.getElementById('fm-label').className   = 'text-xl font-bold ' +
+    (fmSkip ? 'text-gray-400' : fmOK ? 'text-green-600' : 'text-red-600');
+  if (!fmSkip) {
+    const logs = fmData.logs || [];
+    if (logs.length) {
+      const best = logs.reduce((a,b) => ((a.distance??1)<(b.distance??1)?a:b), logs[0]);
+      document.getElementById('fm-score').textContent =
+        best.distance != null ? 'أقل مسافة: ' + Number(best.distance).toFixed(3) : '';
+    }
+  }
+
+  // ── OCR fields (show when gate ≥ 2 passed) ───────────────────
+  const ocrSection = document.getElementById('ocr-section');
+  if (data.ocr && Object.keys(data.ocr).length) {
+    ocrSection.classList.remove('hidden');
+    const o   = data.ocr;
+    const set = (id, val) => { document.getElementById(id).textContent = val || '—'; };
+    set('r-name',   o.name);
+    set('r-id',     o.id_number);
+    set('r-birth',  fmtDate8(o.birth_date));
+    set('r-issue',  o.issue_date);
+    set('r-expiry', fmtDate8(o.expiry_date));
+    set('r-prof',   o.profession);
+    set('r-gender', o.gender);
+    set('r-rel',    o.religion);
+    set('r-mar',    o.marital_status);
+    set('r-addr',   o.address);
+  }
+
+  // ── Error detail box ─────────────────────────────────────────
+  const errTxt = data.error || '';
+  if (errTxt) {
+    document.getElementById('err-box').classList.remove('hidden');
+    document.getElementById('err-txt').textContent = errTxt;
+  }
+}
+
+function fmtDate8(raw) {
+  if (!raw) return raw;
+  const western = String(raw).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  const digits  = western.replace(/\D/g, '');
+  if (digits.length === 8)
+    return digits.slice(0,4) + '/' + digits.slice(4,6) + '/' + digits.slice(6,8);
+  return raw;
+}
+
+function renderError(msg) {
+  document.getElementById('res-loading').innerHTML = `
+    <div class="text-5xl mb-4">⚠️</div>
+    <p class="text-gray-800 font-bold text-lg">حدث خطأ في الاتصال</p>
+    <p class="text-red-600 text-sm mt-2 max-w-sm text-center">${msg}</p>
+    <button onclick="resetAll()"
+      class="mt-6 bg-slate-100 hover:bg-slate-200 text-gray-700 font-semibold px-6 py-2 rounded-xl transition-all">
+      🔄 المحاولة مجددًا
+    </button>
+  `;
+}
+
+// ─── Reset ───────────────────────────────────────────────────────
+function resetAll() {
+  frontFile = backFile = selfieBlob = null;
+  clearInterval(stageTimer);
+  stopCamera();
+
+  // Reset step 1
+  ['front','back'].forEach(s => {
+    document.getElementById('placeholder-'+s).classList.remove('hidden');
+    const th = document.getElementById('thumb-'+s);
+    th.classList.add('hidden'); th.src = '';
+    document.getElementById('inp-'+s).value = '';
+  });
+  document.getElementById('btn-to2').disabled = true;
+
+  // Reset step 2
+  document.getElementById('snap-img').classList.add('hidden');
+  document.getElementById('vid').style.visibility = 'visible';
+  document.getElementById('face-oval').style.display = '';
+  document.getElementById('btn-capture').classList.remove('hidden');
+  document.getElementById('btn-capture').disabled = true;
+  document.getElementById('btn-retake').classList.add('hidden');
+  document.getElementById('btn-submit').disabled = true;
+  document.getElementById('cam-status').textContent = 'جاري تشغيل الكاميرا…';
+  document.getElementById('cam-status').className = 'text-sm font-medium text-blue-600';
+
+  // Reset step 3
+  document.getElementById('res-loading').innerHTML = `
+    <div class="spin"></div>
+    <p class="text-gray-700 font-semibold text-lg">جاري التحقق…</p>
+    <p id="stage-txt" class="text-sm text-gray-400">تحليل بطاقة الهوية…</p>
+    <p class="text-xs text-gray-400 mt-1">(قد تستغرق العملية ٣–٦ دقائق)</p>
+  `;
+  document.getElementById('res-loading').classList.remove('hidden');
+  document.getElementById('res-body').classList.add('hidden');
+  document.getElementById('err-box').classList.add('hidden');
+  document.getElementById('ocr-section').classList.add('hidden');
+  document.getElementById('gate-timeline').innerHTML = '';
+
+  goStep(1);
+}
+</script>
+</body>
+</html>
