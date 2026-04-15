@@ -1,0 +1,43 @@
+19:12:57.631 | INFO     | setup_tracer              | === OCR TRACING STARTED ===
+19:12:57.677 | DEBUG    | trace                     | [extract_fields_from_crops] STARTED
+19:12:57.680 | DEBUG    | trace_var                 | [extract_fields_from_crops] front_crops_keys: len=4 | value=['name', 'address', 'id_number', 'birth_date']
+19:12:57.685 | DEBUG    | trace_var                 | [extract_fields_from_crops] back_crops_keys: len=7 | value=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+19:12:57.690 | DEBUG    | trace                     | [extract_fields_from_crops] Processing front side fields
+19:12:57.691 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+19:12:57.715 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(462, 1841, 3)
+19:13:10.930 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=5 | value=[{'text': 'احمد', 'score': 0.9439957141876221, 'box': [[1500, 126], [1717, 117], [1721, 230], [1504, 238]]}, {'text': 'عماد', 'score': 0.9683793187141418, 'box': [[1494, 292], [1702, 286], [1705, 395]
+19:13:10.931 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 35.76179552078247
+19:13:10.932 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+19:13:10.932 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(462, 1841, 3)
+19:13:15.909 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=2 | value=[{'text': 'احمد', 'score': 0.890999436378479, 'box': [[1499, 122], [1714, 113], [1718, 228], [1503, 236]]}, {'text': 'عماد السيد برهام المنصورى', 'score': 0.9612154960632324, 'box': [[510, 295], [1710
+19:13:15.910 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 35.26107466220856
+19:13:15.911 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(462, 1841, 3)
+19:13:21.038 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=2 | value=[{'text': 'احمد', 'score': 0.9845651388168335, 'box': [[1498, 124], [1714, 117], [1717, 228], [1501, 235]]}, {'text': 'عماد السيد برهام المنصورى', 'score': 0.9868113994598389, 'box': [[509, 293], [170
+19:13:21.039 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 35.85688269138336
+19:13:21.040 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 2
+19:13:21.040 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(462, 1841, 3)
+19:13:26.200 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=5 | value=[{'text': 'احمد', 'score': 0.989520788192749, 'box': [[1492, 115], [1719, 103], [1726, 239], [1499, 250]]}, {'text': 'عماد', 'score': 0.9929700493812561, 'box': [[1473, 284], [1709, 276], [1713, 405],
+19:13:26.201 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 35.666083335876465
+19:13:26.203 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 2
+19:13:26.203 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 35.85688269138336
+19:13:26.204 | DEBUG    | trace_var                 | [extract_fields_from_crops] name_lines: len=2 | value=[{'text': 'احمد', 'score': 0.9845651388168335, 'box': [[1498, 124], [1714, 117], [1717, 228], [1501, 235]]}, {'text': 'عماد السيد برهام المنصورى', 'score': 0.9868113994598389, 'box': [[509, 293], [170
+19:13:26.204 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+19:13:26.217 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(376, 1812, 3)
+19:13:31.370 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_lines: len=5 | value=[{'text': 'السعديه', 'score': 0.9947546720504761, 'box': [[1386, 59], [1692, 54], [1694, 175], [1388, 180]]}, {'text': 'القبليه', 'score': 0.9941670298576355, 'box': [[1128, 55], [1379, 51], [1381, 18
+19:13:31.371 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_score: 38.866854548454285
+19:13:31.371 | DEBUG    | trace                     | [_best_lines_for_text] New best variant 0
+19:13:31.372 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_shape: len=3 | value=(376, 1812, 3)
+19:13:36.048 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_lines: len=2 | value=[{'text': 'السعديه القبليه', 'score': 0.9767049551010132, 'box': [[1124, 52], [1700, 40], [1703, 177], [1126, 189]]}, {'text': 'مركز كفر سعد  دمياط', 'score': 0.9242936372756958, 'box': [[822, 202], [
+19:13:36.049 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_1_score: 38.504992961883545
+19:13:36.050 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_shape: len=3 | value=(376, 1812, 3)
+19:13:40.488 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_lines: len=2 | value=[{'text': 'السعديه القبليه', 'score': 0.9697514176368713, 'box': [[1127, 48], [1699, 39], [1701, 176], [1129, 185]]}, {'text': 'مركز كفر سعد  دمياط', 'score': 0.9488418698310852, 'box': [[823, 199], [
+19:13:40.489 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_2_score: 38.59296643733978
+19:13:40.490 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_shape: len=3 | value=(376, 1812, 3)
+19:13:44.863 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_lines: len=4 | value=[{'text': 'القبليه', 'score': 0.9921674132347107, 'box': [[1127, 54], [1379, 49], [1382, 180], [1130, 185]]}, {'text': 'السعديه', 'score': 0.9898901581764221, 'box': [[1387, 56], [1695, 56], [1695, 18
+19:13:44.864 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_3_score: 38.75486800074577
+19:13:44.865 | DEBUG    | trace_var                 | [_best_lines_for_text] best_idx: 0
+19:13:44.867 | DEBUG    | trace_var                 | [_best_lines_for_text] best_score: 38.866854548454285
+19:13:44.867 | DEBUG    | trace_var                 | [extract_fields_from_crops] address_lines: len=5 | value=[{'text': 'السعديه', 'score': 0.9947546720504761, 'box': [[1386, 59], [1692, 54], [1694, 175], [1388, 180]]}, {'text': 'القبليه', 'score': 0.9941670298576355, 'box': [[1128, 55], [1379, 51], [1381, 18
+19:13:44.868 | DEBUG    | trace                     | [_best_numeric_from_crop] STARTED prefer_len=14
+19:13:44.868 | DEBUG    | trace                     | [_best_lines_for_text] STARTED
+19:13:44.887 | DEBUG    | trace_var                 | [_best_lines_for_text] variant_0_shape: len=3 | value=(503, 1529, 3)

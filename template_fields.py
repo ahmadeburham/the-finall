@@ -5,6 +5,8 @@ from typing import Dict, List, Optional, Tuple
 import cv2
 import numpy as np
 
+import card_detect as _cd
+
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp", ".jfif"}
 
@@ -56,27 +58,19 @@ def crop_norm_box(img: np.ndarray, box, pad_px: int = 0) -> np.ndarray:
     return img[y1:y2, x1:x2].copy()
 
 
-def _rotation_matrix_for_image(image: np.ndarray, angle: int) -> Optional[np.ndarray]:
-    if angle == 0:
-        return None
-    if angle not in {90, 180, 270}:
-        raise ValueError(f"Unsupported angle: {angle}")
-    h, w = image.shape[:2]
-    center = ((w - 1) / 2.0, (h - 1) / 2.0)
-    scale = 1.0
-    if angle in {90, 270}:
-        scale = min(float(w) / max(float(h), 1.0), float(h) / max(float(w), 1.0))
-    return cv2.getRotationMatrix2D(center, -float(angle), scale)
+_CV2_ROTATE_CODE = {
+    90:  cv2.ROTATE_90_CLOCKWISE,
+    180: cv2.ROTATE_180,
+    270: cv2.ROTATE_90_COUNTERCLOCKWISE,
+}
 
 
 def rotate_image(image: np.ndarray, angle: int) -> np.ndarray:
     if angle == 0:
         return image.copy()
-    if angle not in {90, 180, 270}:
+    if angle not in _CV2_ROTATE_CODE:
         raise ValueError(f"Unsupported angle: {angle}")
-    h, w = image.shape[:2]
-    matrix = _rotation_matrix_for_image(image, angle)
-    return cv2.warpAffine(image, matrix, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    return cv2.rotate(image, _CV2_ROTATE_CODE[angle])
 
 
 def order_points(pts: np.ndarray) -> np.ndarray:
@@ -192,13 +186,93 @@ def _fallback_rotations_for_subject(subject_h: int, subject_w: int) -> Tuple[int
 def _map_rotated_points_to_source(points: np.ndarray, source_bgr: np.ndarray, rotation: int) -> np.ndarray:
     mapped = np.asarray(points, dtype="float32").reshape(-1, 2)
     if rotation != 0:
-        matrix = _rotation_matrix_for_image(source_bgr, rotation)
-        inverse_matrix = cv2.invertAffineTransform(matrix)
-        mapped = cv2.transform(mapped.reshape(-1, 1, 2), inverse_matrix).reshape(-1, 2)
+        src_h, src_w = source_bgr.shape[:2]
+        xs, ys = mapped[:, 0].copy(), mapped[:, 1].copy()
+        if rotation == 90:
+            # cv2.ROTATE_90_CLOCKWISE forward: (sx,sy) -> (src_h-1-sy, sx)
+            # Inverse:  (rx,ry) -> source (sx=ry, sy=src_h-1-rx)
+            mapped[:, 0] = ys
+            mapped[:, 1] = src_h - 1 - xs
+        elif rotation == 180:
+            # cv2.ROTATE_180 forward: (sx,sy) -> (src_w-1-sx, src_h-1-sy)
+            # Inverse:  (rx,ry) -> source (sx=src_w-1-rx, sy=src_h-1-ry)
+            mapped[:, 0] = src_w - 1 - xs
+            mapped[:, 1] = src_h - 1 - ys
+        elif rotation == 270:
+            # cv2.ROTATE_90_COUNTERCLOCKWISE forward: (sx,sy) -> (sy, src_w-1-sx)
+            # Inverse:  (rx,ry) -> source (sx=src_w-1-ry, sy=rx)
+            mapped[:, 0] = src_w - 1 - ys
+            mapped[:, 1] = xs
     h, w = source_bgr.shape[:2]
     mapped[:, 0] = np.clip(mapped[:, 0], 0, max(w - 1, 0))
     mapped[:, 1] = np.clip(mapped[:, 1], 0, max(h - 1, 0))
     return order_points(mapped.astype("float32"))
+
+
+def _strip_orientation_score(img_gray: np.ndarray, tmpl_gray: np.ndarray) -> float:
+    """Score how well the top/bottom strips match the template's top/bottom strips.
+    Positive = correct orientation, negative = likely flipped."""
+    th, tw = tmpl_gray.shape[:2]
+    fifth = max(1, th // 5)
+    ref_top = tmpl_gray[:fifth, :]
+    ref_bot = tmpl_gray[th - fifth:, :]
+    img_top = img_gray[:fifth, :]
+    img_bot = img_gray[img_gray.shape[0] - fifth:, :]
+    # How well does img-top match template-top (and img-bot match template-bot)?
+    correct_s = (float(cv2.matchTemplate(img_top, ref_top, cv2.TM_CCOEFF_NORMED)[0][0]) +
+                 float(cv2.matchTemplate(img_bot, ref_bot, cv2.TM_CCOEFF_NORMED)[0][0]))
+    # How well does img-top match template-bot (and img-bot match template-top)?
+    flipped_s = (float(cv2.matchTemplate(img_top, ref_bot, cv2.TM_CCOEFF_NORMED)[0][0]) +
+                 float(cv2.matchTemplate(img_bot, ref_top, cv2.TM_CCOEFF_NORMED)[0][0]))
+    return correct_s - flipped_s  # positive = correct, negative = flipped
+
+
+def _best_orientation_correction(aligned_bgr: np.ndarray, template_bgr: np.ndarray) -> int:
+    """Return 0 or 180 to correct the aligned image orientation.
+    The card detector + perspective warp already produces a landscape crop,
+    so only 0° vs 180° ambiguity needs resolving (not 90/270)."""
+    th, tw = template_bgr.shape[:2]
+    img = cv2.resize(aligned_bgr, (tw, th))
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    tmpl_gray = cv2.cvtColor(template_bgr, cv2.COLOR_BGR2GRAY)
+
+    # Signal 1: Strip matching — top/bottom strips vs template top/bottom
+    strip_diff = _strip_orientation_score(img_gray, tmpl_gray)
+    # strip_diff > 0 → correct orientation, < 0 → flipped 180°
+
+    # Signal 2: Full-image scoring for 0° vs 180°
+    score_0 = _score_alignment_candidate(img, template_bgr)
+    img_180 = cv2.resize(cv2.rotate(img, cv2.ROTATE_180), (tw, th))
+    score_180 = _score_alignment_candidate(img_180, template_bgr)
+
+    # Signal 3: Photo-position (top-left should be darker than top-right)
+    qh, qw = th // 2, tw // 2
+    tl = float(np.mean(img_gray[:qh, :qw]))
+    tr = float(np.mean(img_gray[:qh, qw:]))
+    bl = float(np.mean(img_gray[qh:, :qw]))
+    br = float(np.mean(img_gray[qh:, qw:]))
+    photo_0   = max(0.0, (tr - tl) / 255.0)   # correct: tl darker (photo)
+    photo_180 = max(0.0, (bl - br) / 255.0)   # flipped: br darker
+
+    # Combined vote for 180° correction (positive → flip needed)
+    flip_vote = (
+        -0.50 * strip_diff +                   # negative strip_diff → flip
+         0.35 * (score_180 - score_0) +         # 180 scores better → flip
+         0.15 * (photo_180 - photo_0)           # photo position favours flip
+    )
+
+    return 180 if flip_vote > 0.02 else 0
+
+
+def _aspect_ratio_score(rect: np.ndarray) -> float:
+    wc = max(float(np.linalg.norm(rect[1] - rect[0])), float(np.linalg.norm(rect[2] - rect[3])))
+    hc = max(float(np.linalg.norm(rect[3] - rect[0])), float(np.linalg.norm(rect[2] - rect[1])))
+    if hc < 1.0:
+        return 0.0
+    card_ratio = 85.6 / 54.0
+    actual_ratio = wc / hc
+    err = abs(actual_ratio - card_ratio) / card_ratio
+    return float(max(0.0, 1.0 - err * 2.0))
 
 
 def _build_alignment_candidate(
@@ -208,7 +282,13 @@ def _build_alignment_candidate(
     rotation: int,
 ) -> Dict:
     rotated_subject = rotate_image(subject_bgr, rotation)
-    contour, contour_score = _segment_card_contour(rotated_subject)
+    rot_h, rot_w = rotated_subject.shape[:2]
+
+    # Use the benchmark-proven pipeline_fused detector (replaces old _segment_card_contour)
+    _det = _cd.detect_card(rotated_subject, "pipeline_fused", template_bgr=template_bgr)
+    contour = _det["contour"]
+    contour_score = float(_det["score"])
+
     candidate = {
         "rotation": int(rotation),
         "valid": False,
@@ -217,28 +297,85 @@ def _build_alignment_candidate(
         "good_matches": 0,
         "score": float(contour_score),
         "orientation_score": 0.0,
+        "template_match_score": -1.0,
     }
     if contour is None:
         return candidate
 
     template_h, template_w = template_bgr.shape[:2]
     rect = order_points(contour.reshape(4, 2).astype("float32"))
-    source_rect = _map_rotated_points_to_source(rect, subject_bgr, rotation)
-    source_to_template = cv2.getPerspectiveTransform(source_rect, template_corners)
-    template_to_source = cv2.getPerspectiveTransform(template_corners, source_rect)
-    aligned = cv2.warpPerspective(subject_bgr, source_to_template, (template_w, template_h))
-    orientation_score = _score_alignment_candidate(aligned, template_bgr)
+
+    # Check if the detected rectangle has inverted aspect ratio (taller than wide).
+    # The card is landscape (~1.585:1), so if width < height, rotate corners by 90°.
+    top_w = float(np.linalg.norm(rect[1] - rect[0]))
+    left_h = float(np.linalg.norm(rect[3] - rect[0]))
+    needs_corner_fix = left_h > top_w * 1.1
+
+    # Build list of corner orderings to try — original + 180° flip,
+    # plus CCW and CW rotated corners (+ their flips) if aspect ratio is inverted
+    rect_variants = [
+        rect,                                                           # original
+        np.array([rect[2], rect[3], rect[0], rect[1]], dtype="float32"),  # 180° flip
+    ]
+    if needs_corner_fix:
+        ccw = np.array([rect[3], rect[0], rect[1], rect[2]], dtype="float32")
+        cw  = np.array([rect[1], rect[2], rect[3], rect[0]], dtype="float32")
+        rect_variants.extend([
+            ccw,                                                        # CCW rotation
+            np.array([ccw[2], ccw[3], ccw[0], ccw[1]], dtype="float32"),  # CCW + 180° flip
+            cw,                                                         # CW rotation
+            np.array([cw[2], cw[3], cw[0], cw[1]], dtype="float32"),    # CW + 180° flip
+        ])
+
+    tmpl_gray = cv2.cvtColor(template_bgr, cv2.COLOR_BGR2GRAY)
+    _face_cc = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    best_vote = -999.0
+    best_aligned = None
+    best_rect = rect
+    for rv in rect_variants:
+        M = cv2.getPerspectiveTransform(rv, template_corners)
+        a = cv2.warpPerspective(rotated_subject, M, (template_w, template_h))
+        a_rs = cv2.resize(a, (template_w, template_h))
+        s = _score_alignment_candidate(a_rs, template_bgr)
+        st = _strip_orientation_score(cv2.cvtColor(a_rs, cv2.COLOR_BGR2GRAY), tmpl_gray)
+        vote = 0.4 * s + 0.6 * st
+        # Face detection bonus: photo is in the left ~35% of a correctly oriented card
+        a_gray = cv2.cvtColor(a_rs, cv2.COLOR_BGR2GRAY)
+        faces = _face_cc.detectMultiScale(a_gray, scaleFactor=1.1, minNeighbors=3, minSize=(20, 20))
+        if len(faces) > 0:
+            for (fx, fy, fw, fh) in faces:
+                face_cx = fx + fw / 2
+                face_cy = fy + fh / 2
+                face_large = fh > template_h * 0.15  # at least 15% of card height
+                face_left = face_cx < template_w * 0.40
+                face_upper = face_cy < template_h * 0.80
+                if face_large and face_left and face_upper:
+                    vote += 0.5  # strong bonus for correct photo position
+                    break
+        if vote > best_vote:
+            best_vote = vote
+            best_aligned = a
+            best_rect = rv
+
+    aligned = best_aligned
+    rect = best_rect
+    orientation_score = _aspect_ratio_score(rect)
+    rot_to_template = cv2.getPerspectiveTransform(rect, template_corners)
+    template_to_rot = cv2.getPerspectiveTransform(template_corners, rect)
+    tmatch = best_vote
+
     candidate.update(
         {
             "valid": True,
             "inliers": 4,
             "inlier_ratio": 1.0,
             "good_matches": 4,
-            "source_corners": source_rect,
-            "source_to_template": source_to_template,
-            "template_to_source": template_to_source,
+            "source_corners": rect,
+            "source_to_template": rot_to_template,
+            "template_to_source": template_to_rot,
             "aligned": aligned,
             "orientation_score": float(orientation_score),
+            "template_match_score": float(tmatch),
         }
     )
     return candidate
@@ -288,18 +425,20 @@ def align_card_to_template(subject_image: str | Path, template_image: str | Path
 
     candidates = []
     best_candidate = None
-    for rotation in _candidate_rotations_for_subject(subject_h, subject_w):
+    # Smart rotation set: each candidate already tries 0° vs 180° flip internally,
+    # so rot=180 is equivalent to rot=0+flip and rot=270 is equivalent to rot=90+flip.
+    # Only add 90° when source is portrait (card likely needs rotation to become landscape).
+    smart_rotations = [0]
+    if subject_h > subject_w:
+        smart_rotations.append(90)
+    for rotation in smart_rotations:
         candidate = _build_alignment_candidate(subject_bgr, template_bgr, template_corners, rotation)
         candidates.append(candidate)
-        if candidate["valid"] and (best_candidate is None or candidate["orientation_score"] > best_candidate["orientation_score"]):
+        if candidate["valid"] and (
+            best_candidate is None
+            or candidate["template_match_score"] > best_candidate.get("template_match_score", -1.0)
+        ):
             best_candidate = candidate
-
-    if best_candidate is None:
-        for rotation in _fallback_rotations_for_subject(subject_h, subject_w):
-            candidate = _build_alignment_candidate(subject_bgr, template_bgr, template_corners, rotation)
-            candidates.append(candidate)
-            if candidate["valid"] and (best_candidate is None or candidate["orientation_score"] > best_candidate["orientation_score"]):
-                best_candidate = candidate
 
     full_image_candidate = _build_full_image_candidate(subject_bgr, template_bgr, template_corners)
     if full_image_candidate is not None:
@@ -346,6 +485,13 @@ def align_card_to_template(subject_image: str | Path, template_image: str | Path
     template_to_source = best_candidate["template_to_source"]
     aligned = best_candidate["aligned"]
 
+    # Orientation correction is now embedded in _build_alignment_candidate
+    # (each candidate already picks the better of 0° vs 180° alignment)
+
+    # corners are in rotated-image space; compute rotated dims for normalisation
+    rot_subject = rotate_image(subject_bgr, rotation)
+    rot_h, rot_w = rot_subject.shape[:2]
+
     info = {
         "method": "contour_template_projection",
         "rotation": int(rotation),
@@ -356,9 +502,9 @@ def align_card_to_template(subject_image: str | Path, template_image: str | Path
         "good_matches": 4,
         "card_detected": True,
         "template_size": [int(template_w), int(template_h)],
-        "source_size": [int(subject_w), int(subject_h)],
+        "source_size": [int(rot_w), int(rot_h)],
         "card_corners_px": [[float(x), float(y)] for x, y in source_corners],
-        "card_corners_norm": [[float(x / max(subject_w, 1)), float(y / max(subject_h, 1))] for x, y in source_corners],
+        "card_corners_norm": [[float(x / max(rot_w, 1)), float(y / max(rot_h, 1))] for x, y in source_corners],
         "source_to_template_matrix": [[float(v) for v in row] for row in source_to_template],
         "template_to_source_matrix": [[float(v) for v in row] for row in template_to_source],
     }

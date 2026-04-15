@@ -37,11 +37,10 @@ FRONT_REGIONS = [
 
 BACK_REGIONS = [
     # name,                  [x1,   y1,   x2,   y2 ]
-    # Eagle emblem — sharp, stable, non-personal
-    ("back_eagle",           [0.86, 0.00, 1.00, 0.28]),
-    # Central pharaoh/deity illustration — most keypoints on back
-    ("back_pharaoh_bg",      [0.20, 0.00, 0.86, 0.55]),
-    # 2D barcode strip — extremely high keypoint density
+    # 2D barcode strip — the single most reliable back feature:
+    # extremely high and uniform keypoint density, appears on every real
+    # Egyptian ID back regardless of card holder.  Eagle emblem and pharaoh
+    # artwork are too small / too faint in mobile photos for reliable matching.
     ("back_barcode",         [0.00, 0.57, 1.00, 1.00]),
 ]
 

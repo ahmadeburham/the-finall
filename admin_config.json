@@ -1,6 +1,6 @@
 {
   "feature_front": true,
-  "feature_back": true,
+  "feature_back": false,
   "alignment": true,
   "ocr": false,
   "liveness": false,

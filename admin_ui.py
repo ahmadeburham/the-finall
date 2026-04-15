@@ -4,17 +4,34 @@ Run with:  python admin_ui.py
 No model needs to be running first.
 """
 import json
+import logging
+import multiprocessing as mp
 import os
 import shutil
 import sys
 import threading
 import tkinter as tk
+import traceback as tb_module
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 import cv2
 from PIL import Image, ImageDraw, ImageTk
 import template_fields as tf
+import card_detect
+
+# ── Logging setup ─────────────────────────────────────────────────────────────
+LOG_FILE = Path(__file__).resolve().parent / "admin_ui.log"
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="[%(asctime)s] [%(levelname)7s] %(funcName)s — %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler(str(LOG_FILE), encoding="utf-8", mode="a"),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
+log = logging.getLogger("admin_ui")
 
 HERE = Path(__file__).resolve().parent
 CONFIG_PATH    = HERE / "id_template_config.json"
@@ -48,34 +65,49 @@ DISPLAY_H = 520
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 def load_config() -> dict:
+    log.debug("Loading config from %s", CONFIG_PATH)
     if CONFIG_PATH.exists():
-        return json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        log.info("Config loaded — %d sides", len(cfg))
+        return cfg
+    log.warning("Config file not found, using defaults")
     return {"front": {"roi_pad_px": 4, "ocr_rois": {}}, "back": {"roi_pad_px": 4, "ocr_rois": {}}}
 
 
 def save_config(cfg: dict):
+    log.info("Saving config to %s", CONFIG_PATH)
     CONFIG_PATH.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+    log.debug("Config saved successfully")
 
 
 def load_admin_cfg() -> dict:
+    log.debug("Loading admin config from %s", ADMIN_CFG_PATH)
     if ADMIN_CFG_PATH.exists():
-        return json.loads(ADMIN_CFG_PATH.read_text(encoding="utf-8"))
+        cfg = json.loads(ADMIN_CFG_PATH.read_text(encoding="utf-8"))
+        log.info("Admin config loaded — stages: %s", cfg)
+        return cfg
+    log.warning("Admin config not found, all stages enabled by default")
     return {k: True for k, _ in STAGES}
 
 
 def save_admin_cfg(cfg: dict):
+    log.info("Saving admin config: %s", cfg)
     ADMIN_CFG_PATH.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def cv2_to_pil(bgr):
+    log.debug("cv2_to_pil: shape=%s dtype=%s", bgr.shape, bgr.dtype)
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
     return Image.fromarray(rgb)
 
 
 def load_pil(path: Path) -> Image.Image:
+    log.debug("load_pil: %s", path)
     img = tf.read_image(path)
     if img is None:
+        log.error("load_pil FAILED: Cannot read %s", path)
         raise FileNotFoundError(f"Cannot read {path}")
+    log.debug("load_pil OK: %s shape=%s", path, img.shape)
     return cv2_to_pil(img)
 
 
@@ -83,6 +115,7 @@ def fit_image(pil_img: Image.Image, max_w=DISPLAY_W, max_h=DISPLAY_H) -> Image.I
     w, h = pil_img.size
     scale = min(max_w / w, max_h / h, 1.0)
     new_w, new_h = int(w * scale), int(h * scale)
+    log.debug("fit_image: %dx%d -> %dx%d (scale=%.3f)", w, h, new_w, new_h, scale)
     return pil_img.resize((new_w, new_h), Image.LANCZOS), scale
 
 
@@ -98,6 +131,7 @@ class TemplateTab(tk.Frame):
     """
 
     def __init__(self, parent):
+        log.info("TemplateTab.__init__")
         super().__init__(parent, bg="#1e1e2e")
         self._side      = tk.StringVar(value="front")
         self._cfg       = load_config()
@@ -221,27 +255,34 @@ class TemplateTab(tk.Frame):
     # ── template loading ──────────────────────────────────────────────────────
 
     def _on_side_change(self):
+        log.info("TemplateTab._on_side_change -> %s", self._side.get())
         self._selected = None
         self._load_template()
 
     def _load_template(self):
         side = self._side.get()
         tpl_path = FRONT_TEMPLATE if side == "front" else BACK_TEMPLATE
+        log.info("TemplateTab._load_template: side=%s path=%s", side, tpl_path)
         try:
             self._pil_orig = load_pil(tpl_path)
+            log.info("Template loaded OK: %s", tpl_path)
         except Exception as e:
+            log.error("Template load FAILED: %s", e, exc_info=True)
             messagebox.showerror("Error", f"Cannot load template:\n{e}")
             return
         self._refresh_roi_panel()
         self._redraw()
 
     def _upload_template(self):
+        log.info("TemplateTab._upload_template")
         path = filedialog.askopenfilename(
             filetypes=[("Images", "*.png *.jpg *.jpeg *.bmp")])
         if not path:
+            log.debug("Upload cancelled")
             return
         side = self._side.get()
         dest = FRONT_TEMPLATE if side == "front" else BACK_TEMPLATE
+        log.info("Copying template %s -> %s", path, dest)
         TEMPLATES_DIR.mkdir(exist_ok=True)
         shutil.copy2(path, dest)
         self._load_template()
@@ -250,13 +291,13 @@ class TemplateTab(tk.Frame):
     # ── ROI list panel ────────────────────────────────────────────────────────
 
     def _refresh_roi_panel(self):
+        side = self._side.get()
+        rois = self._cfg.get(side, {}).get("ocr_rois", {})
+        log.debug("TemplateTab._refresh_roi_panel: side=%s rois=%d", side, len(rois))
         for w in self._roi_inner.winfo_children():
             w.destroy()
         self._roi_entries.clear()
         self._roi_rows.clear()
-
-        side = self._side.get()
-        rois = self._cfg.get(side, {}).get("ocr_rois", {})
         for idx, (name, box) in enumerate(rois.items()):
             color = ROI_COLORS[idx % len(ROI_COLORS)]
             self._add_roi_row(name, box, color)
@@ -304,6 +345,7 @@ class TemplateTab(tk.Frame):
         self._roi_entries[name] = tuple(vars_)
 
     def _select_roi(self, name: str):
+        log.debug("TemplateTab._select_roi: %s", name)
         self._selected = name
         self._refresh_roi_panel()
         # populate coord panel
@@ -363,6 +405,7 @@ class TemplateTab(tk.Frame):
 
     def _add_roi(self):
         name = self._new_roi_name.get().strip()
+        log.info("TemplateTab._add_roi: name=%r", name)
         if not name:
             messagebox.showwarning("Name required", "Enter a name for the new ROI.")
             return
@@ -378,6 +421,7 @@ class TemplateTab(tk.Frame):
         self._redraw()
 
     def _delete_roi(self, name: str):
+        log.info("TemplateTab._delete_roi: %s", name)
         side = self._side.get()
         rois = self._cfg.get(side, {}).get("ocr_rois", {})
         if name in rois:
@@ -562,6 +606,7 @@ class TemplateTab(tk.Frame):
     # ── save ─────────────────────────────────────────────────────────────────
 
     def _save(self):
+        log.info("TemplateTab._save")
         side = self._side.get()
         for name in list(self._roi_entries.keys()):
             self._sync_roi_to_cfg(name)
@@ -573,6 +618,7 @@ class TemplateTab(tk.Frame):
 
 class FeaturesTab(tk.Frame):
     def __init__(self, parent):
+        log.info("FeaturesTab.__init__")
         super().__init__(parent, bg="#1e1e2e")
         self._side = tk.StringVar(value="front")
         self._build()
@@ -626,6 +672,7 @@ class FeaturesTab(tk.Frame):
 
     def _refresh(self):
         d = self._feature_dir()
+        log.debug("FeaturesTab._refresh: dir=%s", d)
         d.mkdir(parents=True, exist_ok=True)
         self._listbox.delete(0, "end")
         self._files = []
@@ -633,6 +680,7 @@ class FeaturesTab(tk.Frame):
             if p.is_file() and p.suffix.lower() in IMAGE_EXTS:
                 self._listbox.insert("end", p.name)
                 self._files.append(p)
+        log.debug("FeaturesTab._refresh: found %d images", len(self._files))
         self._preview_canvas.delete("all")
 
     def _on_select(self, _event=None):
@@ -651,6 +699,7 @@ class FeaturesTab(tk.Frame):
             messagebox.showerror("Error", str(e))
 
     def _upload(self):
+        log.info("FeaturesTab._upload")
         paths = filedialog.askopenfilenames(
             filetypes=[("Images", "*.png *.jpg *.jpeg *.bmp *.tif *.webp")])
         if not paths:
@@ -666,6 +715,7 @@ class FeaturesTab(tk.Frame):
         if not sel:
             return
         path = self._files[sel[0]]
+        log.info("FeaturesTab._delete: %s", path)
         if messagebox.askyesno("Delete", f"Delete {path.name}?"):
             path.unlink(missing_ok=True)
             self._refresh()
@@ -675,6 +725,7 @@ class FeaturesTab(tk.Frame):
 
 class StagesTab(tk.Frame):
     def __init__(self, parent):
+        log.info("StagesTab.__init__")
         super().__init__(parent, bg="#1e1e2e")
         self._admin_cfg = load_admin_cfg()
         self._vars = {}
@@ -704,6 +755,7 @@ class StagesTab(tk.Frame):
                   font=("Segoe UI", 10, "bold")).pack(pady=20)
 
     def _save(self):
+        log.info("StagesTab._save")
         for key, var in self._vars.items():
             self._admin_cfg[key] = var.get()
         save_admin_cfg(self._admin_cfg)
@@ -713,14 +765,31 @@ class StagesTab(tk.Frame):
         return {key: var.get() for key, var in self._vars.items()}
 
 
+# ── OCR subprocess worker (module-level for pickling on Windows) ──────────────
+
+def _ocr_in_process(front_crops, back_crops, result_queue):
+    """Run OCR in a separate process to isolate native PaddlePaddle crashes."""
+    try:
+        import arabic_ocr as ao
+        fields = ao.extract_fields_from_crops(
+            front_crops=front_crops, back_crops=back_crops)
+        safe = {k: v for k, v in fields.items() if k != "raw"}
+        result_queue.put(("ok", safe))
+    except Exception:
+        import traceback
+        result_queue.put(("error", traceback.format_exc()))
+
+
 # ── Tab 4: Run Pipeline ────────────────────────────────────────────────────────
 
 class RunTab(tk.Frame):
     def __init__(self, parent, stages_tab: StagesTab, visual_tab: "VisualResultsTab"):
+        log.info("RunTab.__init__")
         super().__init__(parent, bg="#1e1e2e")
         self._stages_tab = stages_tab
         self._visual_tab = visual_tab
         self._paths = {}
+        self._alive = True
         self._build()
 
     def _build(self):
@@ -763,68 +832,96 @@ class RunTab(tk.Frame):
         self._output.pack(fill="both", expand=True)
 
     def _browse(self, key: str):
+        log.debug("RunTab._browse: key=%s", key)
         path = filedialog.askopenfilename(
             filetypes=[("Images", "*.jpg *.jpeg *.png *.bmp *.webp")])
         if path:
+            log.info("RunTab._browse: %s = %s", key, path)
             self._paths[key].set(path)
 
     def _run(self):
-        self._status.config(text="Running…")
+        log.info("RunTab._run: starting pipeline thread")
+        self._status.config(text="Running…", fg="#f9e2af")
         self._set_output("")
         threading.Thread(target=self._run_thread, daemon=True).start()
 
     def _run_thread(self):
         try:
+            log.info("=" * 60)
+            log.info("PIPELINE RUN STARTED")
+            log.info("=" * 60)
             sys.path.insert(0, str(HERE))
+
+            log.debug("Importing arabic_ocr...")
             import arabic_ocr as ao
+            log.debug("Importing face_match_top4...")
             import face_match_top4 as fm
+            log.debug("Importing feature_pipeline...")
             import feature_pipeline as fp
+            log.debug("Importing liveness_gate...")
             import liveness_gate as lg
+            log.debug("Importing template_fields...")
             import template_fields as tf
+            log.info("All imports OK")
 
             enabled = self._stages_tab.get_enabled()
+            log.info("Enabled stages: %s", enabled)
             cfg = load_config()
 
             selfie      = self._paths["selfie"].get().strip() or None
             front_img   = self._paths["front_image"].get().strip() or None
             back_img    = self._paths["back_image"].get().strip() or None
+            log.info("Inputs: selfie=%s  front=%s  back=%s", selfie, front_img, back_img)
 
             result = {}
 
             # ── Feature validation ────────────────────────────────────────────
             if enabled.get("feature_front") or enabled.get("feature_back"):
+                log.info("[STAGE] Feature validation")
                 feat_result = {"front": None, "back": None}
                 if enabled.get("feature_front") and front_img:
                     front_dir = FEATURES_DIR / "front"
                     if front_dir.exists():
                         try:
+                            log.info("  Running feature_front: %s", front_img)
                             ok, logs = fp.validate_subject_with_top_models(
                                 subject_path=front_img,
                                 features_dir=str(front_dir),
                                 include_deep=False, top_k=4, side_name="front")
                             feat_result["front"] = {"passed": bool(ok), "logs": logs}
+                            log.info("  feature_front result: passed=%s", ok)
                         except Exception as e:
+                            log.error("  feature_front ERROR: %s", e, exc_info=True)
                             feat_result["front"] = {"passed": False, "error": str(e)}
                 if enabled.get("feature_back") and back_img:
                     back_dir = FEATURES_DIR / "back"
                     if back_dir.exists():
                         try:
+                            log.info("  Running feature_back: %s", back_img)
                             ok, logs = fp.validate_subject_with_top_models(
                                 subject_path=back_img,
                                 features_dir=str(back_dir),
                                 include_deep=False, top_k=4, side_name="back")
                             feat_result["back"] = {"passed": bool(ok), "logs": logs}
+                            log.info("  feature_back result: passed=%s", ok)
                         except Exception as e:
+                            log.error("  feature_back ERROR: %s", e, exc_info=True)
                             feat_result["back"] = {"passed": False, "error": str(e)}
                 result["feature_validation"] = feat_result
+            else:
+                log.info("[STAGE] Feature validation — SKIPPED")
 
             # ── Alignment + artifact extraction ──────────────────────────────
             front_art = back_art = None
             if enabled.get("alignment"):
+                log.info("[STAGE] Alignment")
                 if front_img and FRONT_TEMPLATE.exists():
                     try:
+                        log.info("  Aligning front: %s", front_img)
                         aligned_f, info_f = tf.align_card_to_template(
                             front_img, str(FRONT_TEMPLATE))
+                        log.info("  Front aligned OK — rotation=%s score=%s",
+                                 info_f.get('rotation'), info_f.get('score'))
                         front_art = tf.extract_side_artifacts(
                             aligned_f,
                             cfg,
@@ -832,13 +929,20 @@ class RunTab(tk.Frame):
                             subject_image=front_img,
                             align_info=info_f,
                         )
+                        log.info("  Front artifacts: crops=%s photo=%s",
+                                 list(front_art.get('crops', {}).keys()) if front_art else None,
+                                 front_art.get('photo') is not None if front_art else None)
                         result["alignment_front"] = info_f
                     except Exception as e:
+                        log.error("  Front alignment ERROR: %s", e, exc_info=True)
                         result["alignment_front"] = {"error": str(e)}
                 if back_img and BACK_TEMPLATE.exists():
                     try:
+                        log.info("  Aligning back: %s", back_img)
                         aligned_b, info_b = tf.align_card_to_template(
                             back_img, str(BACK_TEMPLATE))
+                        log.info("  Back aligned OK — rotation=%s score=%s",
+                                 info_b.get('rotation'), info_b.get('score'))
                         back_art = tf.extract_side_artifacts(
                             aligned_b,
                             cfg,
@@ -846,139 +950,205 @@ class RunTab(tk.Frame):
                             subject_image=back_img,
                             align_info=info_b,
                         )
+                        log.info("  Back artifacts: crops=%s",
+                                 list(back_art.get('crops', {}).keys()) if back_art else None)
                         result["alignment_back"] = info_b
                     except Exception as e:
+                        log.error("  Back alignment ERROR: %s", e, exc_info=True)
                         result["alignment_back"] = {"error": str(e)}
+            else:
+                log.info("[STAGE] Alignment — SKIPPED")
 
-            # ── OCR ───────────────────────────────────────────────────────────
+            # ── OCR (runs in subprocess to survive native crashes) ────────────
             if enabled.get("ocr"):
+                log.info("[STAGE] OCR (subprocess)")
                 if front_art or back_art:
+                    fc = front_art.get("crops", {}) if front_art else {}
+                    bc = back_art.get("crops", {}) if back_art else None
+                    log.info("  OCR front_crops=%s back_crops=%s",
+                             list(fc.keys()), list(bc.keys()) if bc else None)
                     try:
-                        fields = ao.extract_fields_from_crops(
-                            front_crops=front_art.get("crops", {}) if front_art else {},
-                            back_crops=back_art.get("crops", {}) if back_art else None,
-                        )
-                        result["ocr"] = {k: v for k, v in fields.items()
-                                         if k != "raw"}
+                        q = mp.Queue()
+                        p = mp.Process(target=_ocr_in_process, args=(fc, bc, q))
+                        p.start()
+                        log.info("  OCR subprocess started (pid=%s)", p.pid)
+                        p.join(timeout=300)  # 5 minute timeout
+                        if p.is_alive():
+                            log.error("  OCR subprocess TIMED OUT — killing")
+                            p.terminate()
+                            p.join(5)
+                            result["ocr"] = {"error": "OCR process timed out after 300 seconds"}
+                        elif p.exitcode != 0:
+                            log.error("  OCR subprocess CRASHED with exit code %s", p.exitcode)
+                            result["ocr"] = {"error": f"OCR process crashed (exit code {p.exitcode}). This is a known PaddlePaddle issue."}
+                        else:
+                            try:
+                                status, data = q.get_nowait()
+                                if status == "ok":
+                                    result["ocr"] = data
+                                    log.info("  OCR result keys: %s", list(data.keys()))
+                                else:
+                                    log.error("  OCR returned error: %s", data[:500])
+                                    result["ocr"] = {"error": data}
+                            except Exception:
+                                log.error("  OCR subprocess produced no output")
+                                result["ocr"] = {"error": "OCR process produced no output"}
                     except Exception as e:
+                        log.error("  OCR subprocess ERROR: %s", e, exc_info=True)
                         result["ocr"] = {"error": str(e)}
                 else:
+                    log.warning("  OCR skipped — no artifacts")
                     result["ocr"] = {"skipped": "No aligned artifacts available (alignment stage disabled or no images)"}
+            else:
+                log.info("[STAGE] OCR — SKIPPED")
 
             # ── Face match ────────────────────────────────────────────────────
             if enabled.get("face_match") and selfie and front_art:
+                log.info("[STAGE] Face match")
                 photo_crop = front_art.get("photo")
                 if photo_crop is not None and getattr(photo_crop, "size", 0) > 0:
                     try:
+                        log.info("  Running face match: selfie=%s", selfie)
                         passed, logs = fm.verify_top4_from_array(
                             selfie_path=selfie, target_face_bgr=photo_crop)
                         result["face_match"] = {"passed": bool(passed), "logs": logs}
+                        log.info("  Face match result: passed=%s", passed)
                     except Exception as e:
+                        log.error("  Face match ERROR: %s", e, exc_info=True)
                         result["face_match"] = {"passed": False, "error": str(e)}
                 else:
+                    log.warning("  Face match skipped — no photo crop")
                     result["face_match"] = {"skipped": "No photo crop found in ID"}
+            else:
+                log.info("[STAGE] Face match — SKIPPED (enabled=%s selfie=%s front_art=%s)",
+                         enabled.get('face_match'), selfie is not None, front_art is not None)
 
             # ── Liveness ──────────────────────────────────────────────────────
             if enabled.get("liveness") and selfie:
+                log.info("[STAGE] Liveness")
                 try:
                     lv = lg.check_selfie_liveness(selfie_path=selfie)
                     result["liveness"] = lv
+                    log.info("  Liveness result: %s", lv)
                 except Exception as e:
+                    log.error("  Liveness ERROR: %s", e, exc_info=True)
                     result["liveness"] = {"passed": False, "error": str(e)}
+            else:
+                log.info("[STAGE] Liveness — SKIPPED")
 
+            log.info("Pipeline stages complete — building output")
             output = json.dumps(result, ensure_ascii=False, indent=2,
                                 default=lambda o: str(o))
-            self.after(0, lambda: self._set_output(output))
-            self.after(0, lambda: self._status.config(text="✅ Done", fg="#a6e3a1"))
+            self._safe_after(lambda: self._set_output(output))
+            self._safe_after(lambda: self._status.config(text="\u2705 Done", fg="#a6e3a1"))
 
             # ── build visual sections ─────────────────────────────────────────
+            log.info("Building visual sections")
             sections = []
 
             # 1. Card detection visuals
             detect_imgs = []
             if front_art and front_art.get("outline") is not None:
-                detect_imgs.append(("Front — Card Outline", front_art["outline"]))
+                detect_imgs.append(("Front \u2014 Card Outline", front_art["outline"]))
             if front_art and front_art.get("projection") is not None:
-                detect_imgs.append(("Front — Projected Template ROIs", front_art["projection"]))
+                detect_imgs.append(("Front \u2014 Projected Template ROIs", front_art["projection"]))
             if back_art and back_art.get("outline") is not None:
-                detect_imgs.append(("Back — Card Outline", back_art["outline"]))
+                detect_imgs.append(("Back \u2014 Card Outline", back_art["outline"]))
             if back_art and back_art.get("projection") is not None:
-                detect_imgs.append(("Back — Projected Template ROIs", back_art["projection"]))
+                detect_imgs.append(("Back \u2014 Projected Template ROIs", back_art["projection"]))
             if detect_imgs:
-                sections.append(("🟩  Card Detection", detect_imgs))
+                sections.append(("\U0001f7e9  Card Detection", detect_imgs))
 
             # 2. Aligned images
             aligned_imgs = []
             if front_art and front_art.get("aligned") is not None:
-                aligned_imgs.append(("Front — Aligned", front_art["aligned"]))
+                aligned_imgs.append(("Front \u2014 Aligned", front_art["aligned"]))
             if front_art and front_art.get("cleaned") is not None:
-                aligned_imgs.append(("Front — Cleaned", front_art["cleaned"]))
+                aligned_imgs.append(("Front \u2014 Cleaned", front_art["cleaned"]))
             if back_art and back_art.get("aligned") is not None:
-                aligned_imgs.append(("Back — Aligned", back_art["aligned"]))
+                aligned_imgs.append(("Back \u2014 Aligned", back_art["aligned"]))
             if back_art and back_art.get("cleaned") is not None:
-                aligned_imgs.append(("Back — Cleaned", back_art["cleaned"]))
+                aligned_imgs.append(("Back \u2014 Cleaned", back_art["cleaned"]))
             if aligned_imgs:
-                sections.append(("🗂  Aligned Images", aligned_imgs))
+                sections.append(("\U0001f5c2  Aligned Images", aligned_imgs))
 
             # 3. Cropped ROIs
             crop_imgs = []
             if front_art:
                 if front_art.get("photo") is not None:
-                    crop_imgs.append(("front · photo", front_art["photo"]))
+                    crop_imgs.append(("front \u00b7 photo", front_art["photo"]))
                 for cname, crop in front_art.get("crops", {}).items():
-                    crop_imgs.append((f"front · {cname}", crop))
+                    crop_imgs.append((f"front \u00b7 {cname}", crop))
             if back_art:
                 for cname, crop in back_art.get("crops", {}).items():
-                    crop_imgs.append((f"back · {cname}", crop))
+                    crop_imgs.append((f"back \u00b7 {cname}", crop))
             if crop_imgs:
-                sections.append(("✂  Cropped ROIs", crop_imgs))
+                sections.append(("\u2702  Cropped ROIs", crop_imgs))
 
             # 4. Feature match visualizations
+            log.debug("Building feature match visuals")
             feat_vis = []
             feat_val = result.get("feature_validation", {})
             for side_key in ("front", "back"):
                 side_result = feat_val.get(side_key) or {}
-                logs = side_result.get("logs") or []
+                feat_logs = side_result.get("logs") or []
                 src_path = front_img if side_key == "front" else back_img
                 feat_dir  = FEATURES_DIR / side_key
                 if src_path and feat_dir.exists():
                     subject_bgr = tf.read_image(src_path)
                     if subject_bgr is not None:
-                        for log in (logs if isinstance(logs, list) else []):
+                        for flog in (feat_logs if isinstance(feat_logs, list) else []):
                             feat_path = None
-                            if isinstance(log, dict):
-                                feat_path = log.get("feature_path") or ""
+                            if isinstance(flog, dict):
+                                feat_path = flog.get("feature_path") or ""
                             if feat_path and Path(feat_path).exists():
                                 feat_bgr = tf.read_image(feat_path)
                                 if feat_bgr is not None:
                                     vis = _draw_match_vis(
                                         feat_bgr, subject_bgr,
-                                        log.get("model_name", ""),
-                                        log.get("inliers", 0),
-                                        log.get("score", 0.0),
-                                        bool(log.get("found", False)),
+                                        flog.get("model_name", ""),
+                                        flog.get("inliers", 0),
+                                        flog.get("score", 0.0),
+                                        bool(flog.get("found", False)),
                                     )
-                                    lbl = (f"{side_key} · "
-                                           f"{log.get('model_name','')} · "
+                                    lbl = (f"{side_key} \u00b7 "
+                                           f"{flog.get('model_name','')} \u00b7 "
                                            f"{Path(feat_path).name}")
                                     feat_vis.append((lbl, vis))
             if feat_vis:
-                sections.append(("🔍  Feature Matching", feat_vis))
+                sections.append(("\U0001f50d  Feature Matching", feat_vis))
 
+            log.info("Visual sections built: %d sections", len(sections))
             vis_sections = sections  # capture for lambda
-            self.after(0, lambda s=vis_sections: self._visual_tab.show_results(s))
+            self._safe_after(lambda s=vis_sections: self._visual_tab.show_results(s))
+
+            log.info("=" * 60)
+            log.info("PIPELINE RUN COMPLETE")
+            log.info("=" * 60)
 
         except Exception as e:
-            import traceback
-            msg = traceback.format_exc()
-            self.after(0, lambda: self._set_output(msg))
-            self.after(0, lambda: self._status.config(text="❌ Error", fg="#f38ba8"))
+            log.error("PIPELINE RUN FAILED: %s", e, exc_info=True)
+            msg = tb_module.format_exc()
+            self._safe_after(lambda: self._set_output(msg))
+            self._safe_after(lambda: self._status.config(text="\u274c Error", fg="#f38ba8"))
+
+    def _safe_after(self, func):
+        """Schedule func on the main thread, guarding against destroyed widgets."""
+        try:
+            if self._alive:
+                self.after(0, func)
+        except Exception as e:
+            log.error("_safe_after failed: %s", e, exc_info=True)
 
     def _set_output(self, text: str):
-        self._output.config(state="normal")
-        self._output.delete("1.0", "end")
-        self._output.insert("end", text)
-        self._output.config(state="disabled")
+        log.debug("RunTab._set_output: %d chars", len(text))
+        try:
+            self._output.config(state="normal")
+            self._output.delete("1.0", "end")
+            self._output.insert("end", text)
+            self._output.config(state="disabled")
+        except Exception as e:
+            log.error("_set_output failed: %s", e, exc_info=True)
 
 
 # ── feature match visualizer (standalone, no pipeline import needed) ──────────
@@ -990,6 +1160,8 @@ def _draw_match_vis(feat_bgr, subject_bgr, model_name: str,
     Draws ORB keypoints on both and overlays result text.
     Returns a BGR ndarray.
     """
+    log.debug("_draw_match_vis: model=%s inliers=%d score=%.3f found=%s",
+              model_name, inliers, score, found)
     try:
         TH = 300   # target height for each panel
         def _resize_h(img, h):
@@ -1046,6 +1218,7 @@ class VisualResultsTab(tk.Frame):
     _COLS    = 4
 
     def __init__(self, parent):
+        log.info("VisualResultsTab.__init__")
         super().__init__(parent, bg="#1e1e2e")
         self._tk_refs = []   # keep PhotoImage refs alive
         self._build()
@@ -1088,6 +1261,7 @@ class VisualResultsTab(tk.Frame):
     # ── public API called by RunTab ───────────────────────────────────────────
 
     def clear(self):
+        log.debug("VisualResultsTab.clear")
         for w in self._inner.winfo_children():
             w.destroy()
         self._tk_refs.clear()
@@ -1097,6 +1271,7 @@ class VisualResultsTab(tk.Frame):
         """
         sections: list of (section_title, list_of_(label, bgr_or_pil_image))
         """
+        log.info("VisualResultsTab.show_results: %d sections", len(sections))
         self.clear()
         self._status_lbl.config(text="")
         row_idx = 0
@@ -1196,10 +1371,318 @@ class VisualResultsTab(tk.Frame):
                   bg="#3b82f6", fg="white", relief="flat", padx=12).pack(pady=(0, 8))
 
 
+# ── Tab 6: Card Detection Lab ─────────────────────────────────────────────────
+
+class CardDetectLabTab(tk.Frame):
+    """
+    Interactive lab for comparing card-outline detection methods.
+    - Browse an image
+    - Pick one method from a dropdown → Run Selected
+    - Or click Run All → see every method side-by-side
+    - Results: thumbnail with outline, score, aspect ratio, time
+    - Click any thumbnail to enlarge
+    """
+
+    _THUMB_W = 260
+    _THUMB_H = 180
+    _COLS = 4
+
+    def __init__(self, parent):
+        log.info("CardDetectLabTab.__init__")
+        super().__init__(parent, bg="#1e1e2e")
+        self._img_path = tk.StringVar()
+        self._method_var = tk.StringVar()
+        self._template_var = tk.StringVar(value="Front")
+        self._tk_refs: list = []
+        self._build()
+
+    def _build(self):
+        # ── top: image path + browse ──────────────────────────────────────
+        top = tk.Frame(self, bg="#1e1e2e")
+        top.pack(fill="x", padx=12, pady=(12, 4))
+
+        tk.Label(top, text="Card Detection Lab",
+                 bg="#1e1e2e", fg="#cdd6f4",
+                 font=("Segoe UI", 13, "bold")).pack(anchor="w")
+
+        row1 = tk.Frame(self, bg="#1e1e2e")
+        row1.pack(fill="x", padx=12, pady=4)
+        tk.Label(row1, text="Image:", bg="#1e1e2e", fg="#cdd6f4",
+                 font=("Segoe UI", 10), width=8, anchor="w").pack(side="left")
+        tk.Entry(row1, textvariable=self._img_path, width=60,
+                 bg="#313244", fg="white",
+                 insertbackground="white").pack(side="left", padx=4)
+        tk.Button(row1, text="Browse…", command=self._browse,
+                  bg="#7c3aed", fg="white", relief="flat", padx=8).pack(side="left")
+
+        # ── template selector ────────────────────────────────────────────
+        row_tmpl = tk.Frame(self, bg="#1e1e2e")
+        row_tmpl.pack(fill="x", padx=12, pady=4)
+        tk.Label(row_tmpl, text="Template:", bg="#1e1e2e", fg="#cdd6f4",
+                 font=("Segoe UI", 10), width=8, anchor="w").pack(side="left")
+        for side in ("Front", "Back"):
+            tk.Radiobutton(
+                row_tmpl, text=side, variable=self._template_var, value=side,
+                bg="#1e1e2e", fg="#cdd6f4", selectcolor="#313244",
+                activebackground="#1e1e2e", activeforeground="white",
+                font=("Segoe UI", 10),
+                command=self._update_template_status,
+            ).pack(side="left", padx=6)
+        self._tmpl_status = tk.Label(
+            row_tmpl, text="", bg="#1e1e2e", fg="#6c7086",
+            font=("Segoe UI", 9))
+        self._tmpl_status.pack(side="left", padx=8)
+        self._update_template_status()
+
+        # ── method selector + buttons ─────────────────────────────────────
+        row2 = tk.Frame(self, bg="#1e1e2e")
+        row2.pack(fill="x", padx=12, pady=4)
+
+        tk.Label(row2, text="Method:", bg="#1e1e2e", fg="#cdd6f4",
+                 font=("Segoe UI", 10), width=8, anchor="w").pack(side="left")
+
+        methods = card_detect.list_methods()
+        if methods:
+            self._method_var.set(methods[0])
+        self._dropdown = ttk.Combobox(
+            row2, textvariable=self._method_var,
+            values=methods, state="readonly", width=24,
+            font=("Segoe UI", 10))
+        self._dropdown.pack(side="left", padx=4)
+
+        tk.Button(row2, text="Run Selected", command=self._run_selected,
+                  bg="#3b82f6", fg="white", relief="flat", padx=12,
+                  font=("Segoe UI", 10, "bold")).pack(side="left", padx=8)
+
+        tk.Button(row2, text="Run All Methods", command=self._run_all,
+                  bg="#22c55e", fg="white", relief="flat", padx=12,
+                  font=("Segoe UI", 10, "bold")).pack(side="left", padx=4)
+
+        # ── status + best label ───────────────────────────────────────────
+        self._status = tk.Label(self, text="", bg="#1e1e2e", fg="#f9e2af",
+                                font=("Segoe UI", 10))
+        self._status.pack(pady=2)
+
+        self._best_lbl = tk.Label(self, text="", bg="#1e1e2e", fg="#a6e3a1",
+                                  font=("Segoe UI", 11, "bold"))
+        self._best_lbl.pack(pady=2)
+
+        # ── scrollable results grid ───────────────────────────────────────
+        outer = tk.Frame(self, bg="#181825", bd=1, relief="sunken")
+        outer.pack(fill="both", expand=True, padx=12, pady=(4, 8))
+
+        self._scroll = tk.Canvas(outer, bg="#181825", highlightthickness=0)
+        vsb = ttk.Scrollbar(outer, orient="vertical", command=self._scroll.yview)
+        hsb = ttk.Scrollbar(outer, orient="horizontal", command=self._scroll.xview)
+        self._inner = tk.Frame(self._scroll, bg="#181825")
+        self._inner.bind("<Configure>",
+                         lambda e: self._scroll.configure(scrollregion=self._scroll.bbox("all")))
+        self._scroll.create_window((0, 0), window=self._inner, anchor="nw")
+        self._scroll.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        hsb.pack(side="bottom", fill="x")
+        vsb.pack(side="right", fill="y")
+        self._scroll.pack(fill="both", expand=True)
+        self._scroll.bind_all("<MouseWheel>",
+            lambda e: self._scroll.yview_scroll(int(-1 * (e.delta / 120)), "units"))
+
+    # ── actions ───────────────────────────────────────────────────────────
+
+    def _browse(self):
+        path = filedialog.askopenfilename(
+            filetypes=[("Images", "*.jpg *.jpeg *.png *.bmp *.webp")])
+        if path:
+            self._img_path.set(path)
+
+    def _load_image(self):
+        p = self._img_path.get().strip()
+        if not p:
+            messagebox.showwarning("No image", "Please select an image first.")
+            return None
+        try:
+            return tf.read_image(p)
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            return None
+
+    def _get_template_path(self):
+        side = self._template_var.get()
+        if side == "Front":
+            return FRONT_TEMPLATE
+        return BACK_TEMPLATE
+
+    def _update_template_status(self):
+        p = self._get_template_path()
+        if p.exists():
+            self._tmpl_status.config(text=f"({p.name} loaded)", fg="#a6e3a1")
+        else:
+            self._tmpl_status.config(text=f"({p.name} not found)", fg="#f38ba8")
+
+    def _load_template(self):
+        p = self._get_template_path()
+        if not p.exists():
+            return None
+        try:
+            return tf.read_image(str(p))
+        except Exception:
+            return None
+
+    def _run_selected(self):
+        log.info("CardDetectLabTab._run_selected")
+        img = self._load_image()
+        if img is None:
+            return
+        method = self._method_var.get()
+        tmpl = self._load_template()
+        self._status.config(text=f"Running {method}…", fg="#f9e2af")
+        self.update_idletasks()
+        threading.Thread(target=self._worker, args=(img, [method], tmpl),
+                         daemon=True).start()
+
+    def _run_all(self):
+        log.info("CardDetectLabTab._run_all")
+        img = self._load_image()
+        if img is None:
+            return
+        tmpl = self._load_template()
+        methods = card_detect.list_methods()
+        self._status.config(text="Running all methods…", fg="#f9e2af")
+        self.update_idletasks()
+        threading.Thread(target=self._worker, args=(img, methods, tmpl),
+                         daemon=True).start()
+
+    def _worker(self, img, methods, template_bgr):
+        log.info("CardDetectLabTab._worker: methods=%s", methods)
+        results = []
+        for m in methods:
+            log.debug("  Running method: %s", m)
+            try:
+                r = card_detect.detect_card(img, m, template_bgr=template_bgr)
+                results.append(r)
+                log.debug("  %s -> score=%.3f", m, r.get('score', -1))
+            except Exception as e:
+                log.error("  %s ERROR: %s", m, e, exc_info=True)
+        ranked = card_detect.rank_results(results)
+        log.info("CardDetectLabTab._worker: done, %d results", len(ranked))
+        self.after(0, lambda: self._show_results(ranked))
+
+    # ── display ───────────────────────────────────────────────────────────
+
+    def _clear(self):
+        for w in self._inner.winfo_children():
+            w.destroy()
+        self._tk_refs.clear()
+        self._best_lbl.config(text="")
+
+    def _show_results(self, results):
+        log.info("CardDetectLabTab._show_results: %d results", len(results))
+        self._clear()
+        if not results:
+            self._status.config(text="No results.", fg="#f38ba8")
+            return
+
+        best = results[0]
+        if best["contour"] is not None:
+            ar_str = f"{best['aspect_ratio']:.3f}" if best['aspect_ratio'] else "?"
+            self._best_lbl.config(
+                text=f"Best: {best['method']}  "
+                     f"(score: {best['score']:.3f},  ratio: {ar_str},  "
+                     f"{best['time_ms']}ms)")
+        else:
+            self._best_lbl.config(text="No card detected by any method.")
+
+        self._status.config(text=f"Done — {len(results)} method(s)", fg="#a6e3a1")
+
+        row_idx = 0
+        col_idx = 0
+
+        for r in results:
+            # Build info text
+            detected = r["contour"] is not None
+            ar_str = f"{r['aspect_ratio']:.3f}" if r['aspect_ratio'] else "—"
+            sc_str = f"{r['score']:.3f}" if r['score'] > -1e17 else "fail"
+            err_str = r.get("error") or ""
+            info = (f"{r['method']}\n"
+                    f"score: {sc_str}   ratio: {ar_str}\n"
+                    f"time: {r['time_ms']}ms"
+                    + (f"\n{err_str}" if err_str else ""))
+
+            # Convert debug image to PIL
+            debug_img = r.get("debug_img")
+            if debug_img is None:
+                continue
+            pil = cv2_to_pil(debug_img)
+            thumb = pil.copy()
+            thumb.thumbnail((self._THUMB_W, self._THUMB_H), Image.LANCZOS)
+            canvas_img = Image.new("RGB", (self._THUMB_W, self._THUMB_H), (37, 37, 53))
+            x = (self._THUMB_W - thumb.width) // 2
+            y = (self._THUMB_H - thumb.height) // 2
+            canvas_img.paste(thumb, (x, y))
+            tk_img = ImageTk.PhotoImage(canvas_img)
+            self._tk_refs.append(tk_img)
+
+            # Border color: green for best, red for no detection, grey otherwise
+            if r is best and detected:
+                border_color = "#22c55e"
+            elif not detected:
+                border_color = "#f38ba8"
+            else:
+                border_color = "#313244"
+
+            cell = tk.Frame(self._inner, bg=border_color, bd=3, relief="solid",
+                            pady=4, padx=4)
+            cell.grid(row=row_idx, column=col_idx, padx=6, pady=6, sticky="nw")
+
+            inner_cell = tk.Frame(cell, bg="#252535")
+            inner_cell.pack(fill="both", expand=True)
+
+            img_lbl = tk.Label(inner_cell, image=tk_img, bg="#252535", cursor="hand2")
+            img_lbl.pack()
+            img_lbl.bind("<Button-1>",
+                         lambda e, p=pil, t=r['method']: self._enlarge(p, t))
+
+            tk.Label(inner_cell, text=info, bg="#252535", fg="#cdd6f4",
+                     font=("Consolas", 8), justify="left",
+                     wraplength=self._THUMB_W).pack(pady=(4, 2))
+
+            # Also show mask thumbnail if available
+            mask = r.get("mask")
+            if mask is not None and mask.size > 0:
+                mask_pil = Image.fromarray(mask)
+                mask_pil.thumbnail((self._THUMB_W // 2, self._THUMB_H // 3), Image.LANCZOS)
+                mask_tk = ImageTk.PhotoImage(mask_pil)
+                self._tk_refs.append(mask_tk)
+                mask_lbl = tk.Label(inner_cell, image=mask_tk, bg="#252535")
+                mask_lbl.pack(pady=2)
+                tk.Label(inner_cell, text="mask", bg="#252535", fg="#6c7086",
+                         font=("Segoe UI", 7)).pack()
+
+            col_idx += 1
+            if col_idx >= self._COLS:
+                col_idx = 0
+                row_idx += 1
+
+    def _enlarge(self, pil: Image.Image, title: str):
+        popup = tk.Toplevel(self)
+        popup.title(title)
+        popup.configure(bg="#1e1e2e")
+        sw = popup.winfo_screenwidth()
+        sh = popup.winfo_screenheight()
+        max_w, max_h = int(sw * 0.85), int(sh * 0.85)
+        img = pil.copy()
+        img.thumbnail((max_w, max_h), Image.LANCZOS)
+        tk_img = ImageTk.PhotoImage(img)
+        lbl = tk.Label(popup, image=tk_img, bg="#1e1e2e")
+        lbl.image = tk_img
+        lbl.pack(padx=8, pady=8)
+        tk.Button(popup, text="Close", command=popup.destroy,
+                  bg="#3b82f6", fg="white", relief="flat", padx=12).pack(pady=(0, 8))
+
+
 # ── Main window ───────────────────────────────────────────────────────────────
 
 class AdminApp(tk.Tk):
     def __init__(self):
+        log.info("AdminApp.__init__")
         super().__init__()
         self.title("ID Pipeline Admin")
         self.configure(bg="#1e1e2e")
@@ -1223,23 +1706,49 @@ class AdminApp(tk.Tk):
         t3 = StagesTab(nb)
         t5 = VisualResultsTab(nb)
         t4 = RunTab(nb, t3, t5)
+        t6 = CardDetectLabTab(nb)
 
         nb.add(t1, text="  📋 Templates & ROIs  ")
         nb.add(t2, text="  🖼 Features  ")
         nb.add(t3, text="  ⚙ Stage Toggles  ")
         nb.add(t4, text="  ▶ Run Pipeline  ")
         nb.add(t5, text="  🎨 Visual Results  ")
+        nb.add(t6, text="  🔬 Detection Lab  ")
 
         status_bar = tk.Label(self,
             text=f"Config: {CONFIG_PATH}   |   Templates: {TEMPLATES_DIR}   |   Features: {FEATURES_DIR}",
             bg="#181825", fg="#6c7086", font=("Segoe UI", 8), anchor="w")
         status_bar.pack(fill="x", side="bottom", padx=4, pady=2)
+        log.info("AdminApp.__init__ complete")
+
+    def report_callback_exception(self, exc_type, exc_value, exc_tb):
+        """Override tkinter's default exception handler to log errors instead of crashing."""
+        log.error("Unhandled tkinter callback exception:",
+                  exc_info=(exc_type, exc_value, exc_tb))
+        msg = tb_module.format_exception(exc_type, exc_value, exc_tb)
+        messagebox.showerror("Unexpected Error",
+                             f"An error occurred:\n{''.join(msg[-3:])}\n\nSee admin_ui.log for details.")
+
+    def destroy(self):
+        log.info("AdminApp.destroy")
+        super().destroy()
 
 
 if __name__ == "__main__":
-    TEMPLATES_DIR.mkdir(exist_ok=True)
-    FEATURES_DIR.mkdir(exist_ok=True)
-    (FEATURES_DIR / "front").mkdir(exist_ok=True)
-    (FEATURES_DIR / "back").mkdir(exist_ok=True)
-    app = AdminApp()
-    app.mainloop()
+    log.info("=" * 60)
+    log.info("ADMIN UI STARTING")
+    log.info("=" * 60)
+    try:
+        TEMPLATES_DIR.mkdir(exist_ok=True)
+        FEATURES_DIR.mkdir(exist_ok=True)
+        (FEATURES_DIR / "front").mkdir(exist_ok=True)
+        (FEATURES_DIR / "back").mkdir(exist_ok=True)
+        log.info("Directories ensured")
+        app = AdminApp()
+        log.info("Entering mainloop")
+        app.mainloop()
+    except Exception as e:
+        log.critical("FATAL: %s", e, exc_info=True)
+        raise
+    finally:
+        log.info("ADMIN UI EXITED")

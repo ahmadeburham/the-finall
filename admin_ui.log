@@ -1,0 +1,681 @@
+[2026-04-15 19:05:39] [   INFO] <module> — ============================================================
+[2026-04-15 19:05:39] [   INFO] <module> — ADMIN UI STARTING
+[2026-04-15 19:05:39] [   INFO] <module> — ============================================================
+[2026-04-15 19:05:39] [   INFO] <module> — Directories ensured
+[2026-04-15 19:05:39] [   INFO] __init__ — AdminApp.__init__
+[2026-04-15 19:05:39] [   INFO] __init__ — TemplateTab.__init__
+[2026-04-15 19:05:39] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:05:39] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:05:40] [   INFO] _load_template — TemplateTab._load_template: side=front path=C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:05:40] [  DEBUG] load_pil — load_pil: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:05:40] [  DEBUG] load_pil — load_pil OK: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png shape=(584, 928, 3)
+[2026-04-15 19:05:40] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:05:40] [   INFO] _load_template — Template loaded OK: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:05:40] [  DEBUG] _refresh_roi_panel — TemplateTab._refresh_roi_panel: side=front rois=4
+[2026-04-15 19:05:40] [  DEBUG] fit_image — fit_image: 928x584 -> 820x516 (scale=0.884)
+[2026-04-15 19:05:40] [   INFO] __init__ — FeaturesTab.__init__
+[2026-04-15 19:05:40] [  DEBUG] _refresh — FeaturesTab._refresh: dir=C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\features\front
+[2026-04-15 19:05:40] [  DEBUG] _refresh — FeaturesTab._refresh: found 1 images
+[2026-04-15 19:05:40] [   INFO] __init__ — StagesTab.__init__
+[2026-04-15 19:05:40] [  DEBUG] load_admin_cfg — Loading admin config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\admin_config.json
+[2026-04-15 19:05:40] [   INFO] load_admin_cfg — Admin config loaded — stages: {'feature_front': True, 'feature_back': True, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': True}
+[2026-04-15 19:05:40] [   INFO] __init__ — VisualResultsTab.__init__
+[2026-04-15 19:05:40] [   INFO] __init__ — RunTab.__init__
+[2026-04-15 19:05:40] [   INFO] __init__ — CardDetectLabTab.__init__
+[2026-04-15 19:05:40] [   INFO] __init__ — AdminApp.__init__ complete
+[2026-04-15 19:05:40] [   INFO] <module> — Entering mainloop
+[2026-04-15 19:07:07] [  DEBUG] _browse — RunTab._browse: key=selfie
+[2026-04-15 19:07:11] [  DEBUG] _browse — RunTab._browse: key=front_image
+[2026-04-15 19:07:16] [  DEBUG] _browse — RunTab._browse: key=back_image
+[2026-04-15 19:07:17] [   INFO] _browse — RunTab._browse: back_image = C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/front.jpeg
+[2026-04-15 19:07:18] [  DEBUG] _browse — RunTab._browse: key=front_image
+[2026-04-15 19:07:23] [  DEBUG] _browse — RunTab._browse: key=back_image
+[2026-04-15 19:07:24] [   INFO] _browse — RunTab._browse: back_image = C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:07:25] [  DEBUG] _browse — RunTab._browse: key=front_image
+[2026-04-15 19:07:48] [   INFO] _browse — RunTab._browse: front_image = C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:07:49] [  DEBUG] _browse — RunTab._browse: key=selfie
+[2026-04-15 19:07:53] [   INFO] _browse — RunTab._browse: selfie = C:/Users/ahmad/OneDrive/Desktop/IMG_20251201_150220_704.jpg
+[2026-04-15 19:07:54] [   INFO] _run — RunTab._run: starting pipeline thread
+[2026-04-15 19:07:54] [  DEBUG] _set_output — RunTab._set_output: 0 chars
+[2026-04-15 19:07:54] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:07:54] [   INFO] _run_thread — PIPELINE RUN STARTED
+[2026-04-15 19:07:54] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:07:54] [  DEBUG] _run_thread — Importing arabic_ocr...
+[2026-04-15 19:08:00] [  DEBUG] _new_conn — Starting new HTTPS connection (1): huggingface.co:443
+[2026-04-15 19:08:01] [  DEBUG] _make_request — https://huggingface.co:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:08:01] [  DEBUG] _new_conn — Starting new HTTPS connection (1): aistudio.baidu.com:443
+[2026-04-15 19:08:03] [  DEBUG] _make_request — https://aistudio.baidu.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:08:03] [  DEBUG] _new_conn — Starting new HTTPS connection (1): modelscope.cn:443
+[2026-04-15 19:08:05] [  DEBUG] _make_request — https://modelscope.cn:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:08:05] [  DEBUG] _new_conn — Starting new HTTPS connection (1): paddle-model-ecology.bj.bcebos.com:443
+[2026-04-15 19:08:07] [  DEBUG] _make_request — https://paddle-model-ecology.bj.bcebos.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:08:08] [  DEBUG] wrapper — matplotlib data path: C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\matplotlib\mpl-data
+[2026-04-15 19:08:08] [  DEBUG] wrapper — CONFIGDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:08:08] [  DEBUG] <module> — interactive is False
+[2026-04-15 19:08:08] [  DEBUG] <module> — platform is win32
+[2026-04-15 19:08:08] [  DEBUG] wrapper — CACHEDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:08:08] [  DEBUG] _load_fontmanager — Using fontManager instance from C:\Users\ahmad\.matplotlib\fontlist-v390.json
+[2026-04-15 19:08:17] [  DEBUG] _run_thread — Importing face_match_top4...
+[2026-04-15 19:08:21] [  DEBUG] <module> — Falling back to TensorFlow client; we recommended you install the Cloud TPU client directly with pip install cloud-tpu-client.
+[2026-04-15 19:08:22] [  DEBUG] <module> — Creating converter from 7 to 5
+[2026-04-15 19:08:22] [  DEBUG] <module> — Creating converter from 5 to 7
+[2026-04-15 19:08:22] [  DEBUG] <module> — Creating converter from 7 to 5
+[2026-04-15 19:08:22] [  DEBUG] <module> — Creating converter from 5 to 7
+[2026-04-15 19:08:32] [WARNING] _tfmw_add_deprecation_warning — From C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\tf_keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+[2026-04-15 19:08:35] [  DEBUG] _run_thread — Importing feature_pipeline...
+[2026-04-15 19:08:35] [  DEBUG] _run_thread — Importing liveness_gate...
+[2026-04-15 19:08:35] [  DEBUG] _run_thread — Importing template_fields...
+[2026-04-15 19:08:35] [   INFO] _run_thread — All imports OK
+[2026-04-15 19:08:35] [   INFO] _run_thread — Enabled stages: {'feature_front': True, 'feature_back': True, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': True}
+[2026-04-15 19:08:35] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:08:35] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:08:35] [   INFO] _run_thread — Inputs: selfie=C:/Users/ahmad/OneDrive/Desktop/IMG_20251201_150220_704.jpg  front=C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg  back=C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:08:35] [   INFO] _run_thread — [STAGE] Feature validation
+[2026-04-15 19:08:35] [   INFO] _run_thread —   Running feature_front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:08:38] [   INFO] _run_thread —   feature_front result: passed=True
+[2026-04-15 19:08:38] [   INFO] _run_thread —   Running feature_back: C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:08:40] [   INFO] _run_thread —   feature_back result: passed=True
+[2026-04-15 19:08:40] [   INFO] _run_thread — [STAGE] Alignment
+[2026-04-15 19:08:40] [   INFO] _run_thread —   Aligning front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:09:01] [   INFO] _run_thread —   Front aligned OK — rotation=90 score=0.5585162714645905
+[2026-04-15 19:09:02] [   INFO] _run_thread —   Front artifacts: crops=['name', 'address', 'id_number', 'birth_date'] photo=True
+[2026-04-15 19:09:02] [   INFO] _run_thread —   Aligning back: C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:09:26] [   INFO] _run_thread —   Back aligned OK — rotation=0 score=1.0953830986909596
+[2026-04-15 19:09:26] [   INFO] _run_thread —   Back artifacts: crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:09:26] [   INFO] _run_thread — [STAGE] OCR
+[2026-04-15 19:09:26] [   INFO] _run_thread —   OCR front_crops=['name', 'address', 'id_number', 'birth_date'] back_crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:09:26] [   INFO] setup_tracer — === OCR TRACING STARTED ===
+[2026-04-15 19:09:26] [  DEBUG] trace — [extract_fields_from_crops] STARTED
+[2026-04-15 19:09:26] [  DEBUG] trace_var — [extract_fields_from_crops] front_crops_keys: len=4 | value=['name', 'address', 'id_number', 'birth_date']
+[2026-04-15 19:09:26] [  DEBUG] trace_var — [extract_fields_from_crops] back_crops_keys: len=7 | value=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:09:26] [  DEBUG] trace — [extract_fields_from_crops] Processing front side fields
+[2026-04-15 19:09:26] [  DEBUG] trace — [_best_lines_for_text] STARTED
+[2026-04-15 19:09:26] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_shape: len=3 | value=(419, 1777, 3)
+[2026-04-15 19:09:48] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_lines: len=5 | value=[{'text': '13', 'score': 0.2948991060256958, 'box': [[445, 64], [746, 61], [748, 319], [448, 322]]}, {'text': 'يويي', 'score': 0.3660505414009094, 'box': [[962, 66], [1088, 68], [1082, 419], [955, 419
+[2026-04-15 19:09:48] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_score: 9.618333518505096
+[2026-04-15 19:09:48] [  DEBUG] trace — [_best_lines_for_text] New best variant 0
+[2026-04-15 19:09:48] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_shape: len=3 | value=(419, 1777, 3)
+[2026-04-15 19:09:55] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_lines: len=5 | value=[{'text': '13', 'score': 0.35701608657836914, 'box': [[444, 56], [749, 59], [747, 321], [441, 318]]}, {'text': 'مـييي', 'score': 0.3844403028488159, 'box': [[960, 64], [1089, 64], [1089, 419], [960, 4
+[2026-04-15 19:09:55] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_score: 12.587291330099106
+[2026-04-15 19:09:55] [  DEBUG] trace — [_best_lines_for_text] New best variant 1
+[2026-04-15 19:09:55] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_shape: len=3 | value=(419, 1777, 3)
+[2026-04-15 19:10:02] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_lines: len=6 | value=[{'text': '0b', 'score': 0.6281289458274841, 'box': [[1334, 25], [1431, 23], [1434, 178], [1337, 180]]}, {'text': '13', 'score': 0.4215013384819031, 'box': [[443, 59], [748, 59], [748, 320], [443, 320
+[2026-04-15 19:10:02] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_score: 13.24719899892807
+[2026-04-15 19:10:02] [  DEBUG] trace — [_best_lines_for_text] New best variant 2
+[2026-04-15 19:10:02] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_shape: len=3 | value=(419, 1777, 3)
+[2026-04-15 19:10:09] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_lines: len=6 | value=[{'text': '0b', 'score': 0.4034753441810608, 'box': [[1336, 24], [1438, 24], [1438, 182], [1336, 182]]}, {'text': '13', 'score': 0.3635411262512207, 'box': [[452, 67], [742, 67], [742, 307], [452, 307
+[2026-04-15 19:10:09] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_score: 11.191627437869709
+[2026-04-15 19:10:09] [  DEBUG] trace_var — [_best_lines_for_text] best_idx: 2
+[2026-04-15 19:10:09] [  DEBUG] trace_var — [_best_lines_for_text] best_score: 13.24719899892807
+[2026-04-15 19:10:09] [  DEBUG] trace_var — [extract_fields_from_crops] name_lines: len=6 | value=[{'text': '0b', 'score': 0.6281289458274841, 'box': [[1334, 25], [1431, 23], [1434, 178], [1337, 180]]}, {'text': '13', 'score': 0.4215013384819031, 'box': [[443, 59], [748, 59], [748, 320], [443, 320
+[2026-04-15 19:10:09] [  DEBUG] trace — [_best_lines_for_text] STARTED
+[2026-04-15 19:10:09] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_shape: len=3 | value=(360, 1834, 3)
+[2026-04-15 19:10:16] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_lines: len=3 | value=[{'text': 'يي', 'score': 0.7024855613708496, 'box': [[827, 17], [945, 0], [979, 176], [861, 199]]}, {'text': 'سك', 'score': 0.35896503925323486, 'box': [[1029, 34], [1092, 37], [1085, 192], [1023, 190
+[2026-04-15 19:10:16] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_score: 11.250770052274069
+[2026-04-15 19:10:16] [  DEBUG] trace — [_best_lines_for_text] New best variant 0
+[2026-04-15 19:10:16] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_shape: len=3 | value=(360, 1834, 3)
+[2026-04-15 19:10:21] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_lines: len=4 | value=[{'text': 'س', 'score': 0.1351509541273117, 'box': [[1028, 32], [1095, 36], [1086, 194], [1018, 190]]}, {'text': 'T', 'score': 0.10683653503656387, 'box': [[827, 3], [965, 0], [986, 190], [848, 205]]}
+[2026-04-15 19:10:21] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_score: 8.907529976218939
+[2026-04-15 19:10:21] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_shape: len=3 | value=(360, 1834, 3)
+[2026-04-15 19:10:27] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_lines: len=2 | value=[{'text': 'ر', 'score': 0.3841327428817749, 'box': [[648, 0], [775, 0], [756, 360], [630, 360]]}, {'text': 'ي طة', 'score': 0.5746209621429443, 'box': [[228, 80], [339, 96], [301, 360], [190, 349]]}]
+[2026-04-15 19:10:27] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_score: 8.793768525123596
+[2026-04-15 19:10:27] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_shape: len=3 | value=(360, 1834, 3)
+[2026-04-15 19:10:32] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_lines: len=3 | value=[{'text': 'س', 'score': 0.2858264446258545, 'box': [[1028, 32], [1095, 35], [1088, 195], [1022, 193]]}, {'text': 'يدي', 'score': 0.2903273403644562, 'box': [[644, 0], [773, 0], [761, 360], [631, 360]]
+[2026-04-15 19:10:32] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_score: 9.731869955857594
+[2026-04-15 19:10:32] [  DEBUG] trace_var — [_best_lines_for_text] best_idx: 0
+[2026-04-15 19:10:32] [  DEBUG] trace_var — [_best_lines_for_text] best_score: 11.250770052274069
+[2026-04-15 19:10:32] [  DEBUG] trace_var — [extract_fields_from_crops] address_lines: len=3 | value=[{'text': 'يي', 'score': 0.7024855613708496, 'box': [[827, 17], [945, 0], [979, 176], [861, 199]]}, {'text': 'سك', 'score': 0.35896503925323486, 'box': [[1029, 34], [1092, 37], [1085, 192], [1023, 190
+[2026-04-15 19:10:32] [  DEBUG] trace — [_best_numeric_from_crop] STARTED prefer_len=14
+[2026-04-15 19:10:32] [  DEBUG] trace — [_best_lines_for_text] STARTED
+[2026-04-15 19:10:32] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_shape: len=3 | value=(474, 1509, 3)
+[2026-04-15 19:11:03] [   INFO] <module> — ============================================================
+[2026-04-15 19:11:03] [   INFO] <module> — ADMIN UI STARTING
+[2026-04-15 19:11:03] [   INFO] <module> — ============================================================
+[2026-04-15 19:11:03] [   INFO] <module> — Directories ensured
+[2026-04-15 19:11:03] [   INFO] __init__ — AdminApp.__init__
+[2026-04-15 19:11:03] [   INFO] __init__ — TemplateTab.__init__
+[2026-04-15 19:11:03] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:11:03] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:11:04] [   INFO] _load_template — TemplateTab._load_template: side=front path=C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:11:04] [  DEBUG] load_pil — load_pil: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:11:04] [  DEBUG] load_pil — load_pil OK: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png shape=(584, 928, 3)
+[2026-04-15 19:11:04] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:11:04] [   INFO] _load_template — Template loaded OK: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:11:04] [  DEBUG] _refresh_roi_panel — TemplateTab._refresh_roi_panel: side=front rois=4
+[2026-04-15 19:11:04] [  DEBUG] fit_image — fit_image: 928x584 -> 820x516 (scale=0.884)
+[2026-04-15 19:11:04] [   INFO] __init__ — FeaturesTab.__init__
+[2026-04-15 19:11:04] [  DEBUG] _refresh — FeaturesTab._refresh: dir=C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\features\front
+[2026-04-15 19:11:04] [  DEBUG] _refresh — FeaturesTab._refresh: found 1 images
+[2026-04-15 19:11:04] [   INFO] __init__ — StagesTab.__init__
+[2026-04-15 19:11:04] [  DEBUG] load_admin_cfg — Loading admin config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\admin_config.json
+[2026-04-15 19:11:04] [   INFO] load_admin_cfg — Admin config loaded — stages: {'feature_front': True, 'feature_back': True, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': True}
+[2026-04-15 19:11:04] [   INFO] __init__ — VisualResultsTab.__init__
+[2026-04-15 19:11:04] [   INFO] __init__ — RunTab.__init__
+[2026-04-15 19:11:04] [   INFO] __init__ — CardDetectLabTab.__init__
+[2026-04-15 19:11:04] [   INFO] __init__ — AdminApp.__init__ complete
+[2026-04-15 19:11:04] [   INFO] <module> — Entering mainloop
+[2026-04-15 19:11:13] [  DEBUG] _browse — RunTab._browse: key=selfie
+[2026-04-15 19:11:17] [   INFO] _browse — RunTab._browse: selfie = C:/Users/ahmad/OneDrive/Desktop/IMG_20251201_150220_704.jpg
+[2026-04-15 19:11:18] [  DEBUG] _browse — RunTab._browse: key=front_image
+[2026-04-15 19:11:34] [   INFO] _browse — RunTab._browse: front_image = C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729947270134876715148425243584.jpg
+[2026-04-15 19:11:36] [  DEBUG] _browse — RunTab._browse: key=back_image
+[2026-04-15 19:11:48] [   INFO] _browse — RunTab._browse: back_image = C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:11:49] [  DEBUG] _browse — RunTab._browse: key=back_image
+[2026-04-15 19:11:51] [   INFO] _browse — RunTab._browse: back_image = C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:11:52] [   INFO] _run — RunTab._run: starting pipeline thread
+[2026-04-15 19:11:52] [  DEBUG] _set_output — RunTab._set_output: 0 chars
+[2026-04-15 19:11:52] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:11:52] [   INFO] _run_thread — PIPELINE RUN STARTED
+[2026-04-15 19:11:52] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:11:52] [  DEBUG] _run_thread — Importing arabic_ocr...
+[2026-04-15 19:11:56] [  DEBUG] _new_conn — Starting new HTTPS connection (1): huggingface.co:443
+[2026-04-15 19:11:57] [  DEBUG] _make_request — https://huggingface.co:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:11:57] [  DEBUG] _new_conn — Starting new HTTPS connection (1): aistudio.baidu.com:443
+[2026-04-15 19:11:59] [  DEBUG] _make_request — https://aistudio.baidu.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:11:59] [  DEBUG] _new_conn — Starting new HTTPS connection (1): modelscope.cn:443
+[2026-04-15 19:12:01] [  DEBUG] _new_conn — Starting new HTTPS connection (1): paddle-model-ecology.bj.bcebos.com:443
+[2026-04-15 19:12:03] [  DEBUG] _make_request — https://paddle-model-ecology.bj.bcebos.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:12:03] [  DEBUG] wrapper — matplotlib data path: C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\matplotlib\mpl-data
+[2026-04-15 19:12:04] [  DEBUG] wrapper — CONFIGDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:12:04] [  DEBUG] <module> — interactive is False
+[2026-04-15 19:12:04] [  DEBUG] <module> — platform is win32
+[2026-04-15 19:12:04] [  DEBUG] wrapper — CACHEDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:12:04] [  DEBUG] _load_fontmanager — Using fontManager instance from C:\Users\ahmad\.matplotlib\fontlist-v390.json
+[2026-04-15 19:12:10] [  DEBUG] _run_thread — Importing face_match_top4...
+[2026-04-15 19:12:13] [  DEBUG] <module> — Falling back to TensorFlow client; we recommended you install the Cloud TPU client directly with pip install cloud-tpu-client.
+[2026-04-15 19:12:14] [  DEBUG] <module> — Creating converter from 7 to 5
+[2026-04-15 19:12:14] [  DEBUG] <module> — Creating converter from 5 to 7
+[2026-04-15 19:12:14] [  DEBUG] <module> — Creating converter from 7 to 5
+[2026-04-15 19:12:14] [  DEBUG] <module> — Creating converter from 5 to 7
+[2026-04-15 19:12:21] [WARNING] _tfmw_add_deprecation_warning — From C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\tf_keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+[2026-04-15 19:12:22] [  DEBUG] _run_thread — Importing feature_pipeline...
+[2026-04-15 19:12:22] [  DEBUG] _run_thread — Importing liveness_gate...
+[2026-04-15 19:12:22] [  DEBUG] _run_thread — Importing template_fields...
+[2026-04-15 19:12:22] [   INFO] _run_thread — All imports OK
+[2026-04-15 19:12:22] [   INFO] _run_thread — Enabled stages: {'feature_front': True, 'feature_back': True, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': True}
+[2026-04-15 19:12:22] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:12:22] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:12:22] [   INFO] _run_thread — Inputs: selfie=C:/Users/ahmad/OneDrive/Desktop/IMG_20251201_150220_704.jpg  front=C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729947270134876715148425243584.jpg  back=C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:12:22] [   INFO] _run_thread — [STAGE] Feature validation
+[2026-04-15 19:12:22] [   INFO] _run_thread —   Running feature_front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729947270134876715148425243584.jpg
+[2026-04-15 19:12:24] [   INFO] _run_thread —   feature_front result: passed=True
+[2026-04-15 19:12:24] [   INFO] _run_thread —   Running feature_back: C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:12:26] [   INFO] _run_thread —   feature_back result: passed=True
+[2026-04-15 19:12:26] [   INFO] _run_thread — [STAGE] Alignment
+[2026-04-15 19:12:26] [   INFO] _run_thread —   Aligning front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729947270134876715148425243584.jpg
+[2026-04-15 19:12:40] [   INFO] _run_thread —   Front aligned OK — rotation=0 score=0.8808479221743974
+[2026-04-15 19:12:40] [   INFO] _run_thread —   Front artifacts: crops=['name', 'address', 'id_number', 'birth_date'] photo=True
+[2026-04-15 19:12:40] [   INFO] _run_thread —   Aligning back: C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:12:57] [   INFO] _run_thread —   Back aligned OK — rotation=0 score=1.0953830986909596
+[2026-04-15 19:12:57] [   INFO] _run_thread —   Back artifacts: crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:12:57] [   INFO] _run_thread — [STAGE] OCR
+[2026-04-15 19:12:57] [   INFO] _run_thread —   OCR front_crops=['name', 'address', 'id_number', 'birth_date'] back_crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:12:57] [   INFO] setup_tracer — === OCR TRACING STARTED ===
+[2026-04-15 19:12:57] [  DEBUG] trace — [extract_fields_from_crops] STARTED
+[2026-04-15 19:12:57] [  DEBUG] trace_var — [extract_fields_from_crops] front_crops_keys: len=4 | value=['name', 'address', 'id_number', 'birth_date']
+[2026-04-15 19:12:57] [  DEBUG] trace_var — [extract_fields_from_crops] back_crops_keys: len=7 | value=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:12:57] [  DEBUG] trace — [extract_fields_from_crops] Processing front side fields
+[2026-04-15 19:12:57] [  DEBUG] trace — [_best_lines_for_text] STARTED
+[2026-04-15 19:12:57] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_shape: len=3 | value=(462, 1841, 3)
+[2026-04-15 19:13:10] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_lines: len=5 | value=[{'text': 'احمد', 'score': 0.9439957141876221, 'box': [[1500, 126], [1717, 117], [1721, 230], [1504, 238]]}, {'text': 'عماد', 'score': 0.9683793187141418, 'box': [[1494, 292], [1702, 286], [1705, 395]
+[2026-04-15 19:13:10] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_score: 35.76179552078247
+[2026-04-15 19:13:10] [  DEBUG] trace — [_best_lines_for_text] New best variant 0
+[2026-04-15 19:13:10] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_shape: len=3 | value=(462, 1841, 3)
+[2026-04-15 19:13:15] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_lines: len=2 | value=[{'text': 'احمد', 'score': 0.890999436378479, 'box': [[1499, 122], [1714, 113], [1718, 228], [1503, 236]]}, {'text': 'عماد السيد برهام المنصورى', 'score': 0.9612154960632324, 'box': [[510, 295], [1710
+[2026-04-15 19:13:15] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_score: 35.26107466220856
+[2026-04-15 19:13:15] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_shape: len=3 | value=(462, 1841, 3)
+[2026-04-15 19:13:21] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_lines: len=2 | value=[{'text': 'احمد', 'score': 0.9845651388168335, 'box': [[1498, 124], [1714, 117], [1717, 228], [1501, 235]]}, {'text': 'عماد السيد برهام المنصورى', 'score': 0.9868113994598389, 'box': [[509, 293], [170
+[2026-04-15 19:13:21] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_score: 35.85688269138336
+[2026-04-15 19:13:21] [  DEBUG] trace — [_best_lines_for_text] New best variant 2
+[2026-04-15 19:13:21] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_shape: len=3 | value=(462, 1841, 3)
+[2026-04-15 19:13:26] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_lines: len=5 | value=[{'text': 'احمد', 'score': 0.989520788192749, 'box': [[1492, 115], [1719, 103], [1726, 239], [1499, 250]]}, {'text': 'عماد', 'score': 0.9929700493812561, 'box': [[1473, 284], [1709, 276], [1713, 405],
+[2026-04-15 19:13:26] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_score: 35.666083335876465
+[2026-04-15 19:13:26] [  DEBUG] trace_var — [_best_lines_for_text] best_idx: 2
+[2026-04-15 19:13:26] [  DEBUG] trace_var — [_best_lines_for_text] best_score: 35.85688269138336
+[2026-04-15 19:13:26] [  DEBUG] trace_var — [extract_fields_from_crops] name_lines: len=2 | value=[{'text': 'احمد', 'score': 0.9845651388168335, 'box': [[1498, 124], [1714, 117], [1717, 228], [1501, 235]]}, {'text': 'عماد السيد برهام المنصورى', 'score': 0.9868113994598389, 'box': [[509, 293], [170
+[2026-04-15 19:13:26] [  DEBUG] trace — [_best_lines_for_text] STARTED
+[2026-04-15 19:13:26] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_shape: len=3 | value=(376, 1812, 3)
+[2026-04-15 19:13:31] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_lines: len=5 | value=[{'text': 'السعديه', 'score': 0.9947546720504761, 'box': [[1386, 59], [1692, 54], [1694, 175], [1388, 180]]}, {'text': 'القبليه', 'score': 0.9941670298576355, 'box': [[1128, 55], [1379, 51], [1381, 18
+[2026-04-15 19:13:31] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_score: 38.866854548454285
+[2026-04-15 19:13:31] [  DEBUG] trace — [_best_lines_for_text] New best variant 0
+[2026-04-15 19:13:31] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_shape: len=3 | value=(376, 1812, 3)
+[2026-04-15 19:13:36] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_lines: len=2 | value=[{'text': 'السعديه القبليه', 'score': 0.9767049551010132, 'box': [[1124, 52], [1700, 40], [1703, 177], [1126, 189]]}, {'text': 'مركز كفر سعد  دمياط', 'score': 0.9242936372756958, 'box': [[822, 202], [
+[2026-04-15 19:13:36] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_score: 38.504992961883545
+[2026-04-15 19:13:36] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_shape: len=3 | value=(376, 1812, 3)
+[2026-04-15 19:13:40] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_lines: len=2 | value=[{'text': 'السعديه القبليه', 'score': 0.9697514176368713, 'box': [[1127, 48], [1699, 39], [1701, 176], [1129, 185]]}, {'text': 'مركز كفر سعد  دمياط', 'score': 0.9488418698310852, 'box': [[823, 199], [
+[2026-04-15 19:13:40] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_score: 38.59296643733978
+[2026-04-15 19:13:40] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_shape: len=3 | value=(376, 1812, 3)
+[2026-04-15 19:13:44] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_lines: len=4 | value=[{'text': 'القبليه', 'score': 0.9921674132347107, 'box': [[1127, 54], [1379, 49], [1382, 180], [1130, 185]]}, {'text': 'السعديه', 'score': 0.9898901581764221, 'box': [[1387, 56], [1695, 56], [1695, 18
+[2026-04-15 19:13:44] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_score: 38.75486800074577
+[2026-04-15 19:13:44] [  DEBUG] trace_var — [_best_lines_for_text] best_idx: 0
+[2026-04-15 19:13:44] [  DEBUG] trace_var — [_best_lines_for_text] best_score: 38.866854548454285
+[2026-04-15 19:13:44] [  DEBUG] trace_var — [extract_fields_from_crops] address_lines: len=5 | value=[{'text': 'السعديه', 'score': 0.9947546720504761, 'box': [[1386, 59], [1692, 54], [1694, 175], [1388, 180]]}, {'text': 'القبليه', 'score': 0.9941670298576355, 'box': [[1128, 55], [1379, 51], [1381, 18
+[2026-04-15 19:13:44] [  DEBUG] trace — [_best_numeric_from_crop] STARTED prefer_len=14
+[2026-04-15 19:13:44] [  DEBUG] trace — [_best_lines_for_text] STARTED
+[2026-04-15 19:13:44] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_shape: len=3 | value=(503, 1529, 3)
+[2026-04-15 19:16:26] [   INFO] <module> — ============================================================
+[2026-04-15 19:16:26] [   INFO] <module> — ADMIN UI STARTING
+[2026-04-15 19:16:26] [   INFO] <module> — ============================================================
+[2026-04-15 19:16:26] [   INFO] <module> — Directories ensured
+[2026-04-15 19:16:26] [   INFO] __init__ — AdminApp.__init__
+[2026-04-15 19:16:27] [   INFO] __init__ — TemplateTab.__init__
+[2026-04-15 19:16:27] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:16:27] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:16:27] [   INFO] _load_template — TemplateTab._load_template: side=front path=C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:16:27] [  DEBUG] load_pil — load_pil: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:16:27] [  DEBUG] load_pil — load_pil OK: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png shape=(584, 928, 3)
+[2026-04-15 19:16:27] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:16:27] [   INFO] _load_template — Template loaded OK: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:16:27] [  DEBUG] _refresh_roi_panel — TemplateTab._refresh_roi_panel: side=front rois=4
+[2026-04-15 19:16:27] [  DEBUG] fit_image — fit_image: 928x584 -> 820x516 (scale=0.884)
+[2026-04-15 19:16:27] [   INFO] __init__ — FeaturesTab.__init__
+[2026-04-15 19:16:27] [  DEBUG] _refresh — FeaturesTab._refresh: dir=C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\features\front
+[2026-04-15 19:16:27] [  DEBUG] _refresh — FeaturesTab._refresh: found 1 images
+[2026-04-15 19:16:27] [   INFO] __init__ — StagesTab.__init__
+[2026-04-15 19:16:27] [  DEBUG] load_admin_cfg — Loading admin config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\admin_config.json
+[2026-04-15 19:16:27] [   INFO] load_admin_cfg — Admin config loaded — stages: {'feature_front': True, 'feature_back': True, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': True}
+[2026-04-15 19:16:27] [   INFO] __init__ — VisualResultsTab.__init__
+[2026-04-15 19:16:27] [   INFO] __init__ — RunTab.__init__
+[2026-04-15 19:16:27] [   INFO] __init__ — CardDetectLabTab.__init__
+[2026-04-15 19:16:27] [   INFO] __init__ — AdminApp.__init__ complete
+[2026-04-15 19:16:27] [   INFO] <module> — Entering mainloop
+[2026-04-15 19:16:33] [  DEBUG] _browse — RunTab._browse: key=back_image
+[2026-04-15 19:16:35] [   INFO] _browse — RunTab._browse: back_image = C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:16:37] [  DEBUG] _browse — RunTab._browse: key=front_image
+[2026-04-15 19:16:51] [   INFO] _browse — RunTab._browse: front_image = C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:16:52] [  DEBUG] _browse — RunTab._browse: key=selfie
+[2026-04-15 19:16:57] [   INFO] _browse — RunTab._browse: selfie = C:/Users/ahmad/OneDrive/Desktop/IMG_20251201_150220_704.jpg
+[2026-04-15 19:16:57] [   INFO] _run — RunTab._run: starting pipeline thread
+[2026-04-15 19:16:57] [  DEBUG] _set_output — RunTab._set_output: 0 chars
+[2026-04-15 19:16:57] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:16:57] [   INFO] _run_thread — PIPELINE RUN STARTED
+[2026-04-15 19:16:57] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:16:57] [  DEBUG] _run_thread — Importing arabic_ocr...
+[2026-04-15 19:17:05] [  DEBUG] _new_conn — Starting new HTTPS connection (1): huggingface.co:443
+[2026-04-15 19:17:06] [  DEBUG] _make_request — https://huggingface.co:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:17:06] [  DEBUG] _new_conn — Starting new HTTPS connection (1): aistudio.baidu.com:443
+[2026-04-15 19:17:08] [  DEBUG] _make_request — https://aistudio.baidu.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:17:08] [  DEBUG] _new_conn — Starting new HTTPS connection (1): modelscope.cn:443
+[2026-04-15 19:17:11] [  DEBUG] _make_request — https://modelscope.cn:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:17:11] [  DEBUG] _new_conn — Starting new HTTPS connection (1): paddle-model-ecology.bj.bcebos.com:443
+[2026-04-15 19:17:13] [  DEBUG] _make_request — https://paddle-model-ecology.bj.bcebos.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:17:13] [  DEBUG] wrapper — matplotlib data path: C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\matplotlib\mpl-data
+[2026-04-15 19:17:13] [  DEBUG] wrapper — CONFIGDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:17:13] [  DEBUG] <module> — interactive is False
+[2026-04-15 19:17:13] [  DEBUG] <module> — platform is win32
+[2026-04-15 19:17:13] [  DEBUG] wrapper — CACHEDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:17:13] [  DEBUG] _load_fontmanager — Using fontManager instance from C:\Users\ahmad\.matplotlib\fontlist-v390.json
+[2026-04-15 19:17:19] [  DEBUG] _run_thread — Importing face_match_top4...
+[2026-04-15 19:17:22] [  DEBUG] <module> — Falling back to TensorFlow client; we recommended you install the Cloud TPU client directly with pip install cloud-tpu-client.
+[2026-04-15 19:17:23] [  DEBUG] <module> — Creating converter from 7 to 5
+[2026-04-15 19:17:23] [  DEBUG] <module> — Creating converter from 5 to 7
+[2026-04-15 19:17:23] [  DEBUG] <module> — Creating converter from 7 to 5
+[2026-04-15 19:17:23] [  DEBUG] <module> — Creating converter from 5 to 7
+[2026-04-15 19:17:34] [WARNING] _tfmw_add_deprecation_warning — From C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\tf_keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+[2026-04-15 19:17:36] [  DEBUG] _run_thread — Importing feature_pipeline...
+[2026-04-15 19:17:36] [  DEBUG] _run_thread — Importing liveness_gate...
+[2026-04-15 19:17:36] [  DEBUG] _run_thread — Importing template_fields...
+[2026-04-15 19:17:36] [   INFO] _run_thread — All imports OK
+[2026-04-15 19:17:36] [   INFO] _run_thread — Enabled stages: {'feature_front': True, 'feature_back': True, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': True}
+[2026-04-15 19:17:36] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:17:36] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:17:36] [   INFO] _run_thread — Inputs: selfie=C:/Users/ahmad/OneDrive/Desktop/IMG_20251201_150220_704.jpg  front=C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg  back=C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:17:36] [   INFO] _run_thread — [STAGE] Feature validation
+[2026-04-15 19:17:36] [   INFO] _run_thread —   Running feature_front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:17:38] [   INFO] _run_thread —   feature_front result: passed=True
+[2026-04-15 19:17:38] [   INFO] _run_thread —   Running feature_back: C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:17:40] [   INFO] _run_thread —   feature_back result: passed=True
+[2026-04-15 19:17:40] [   INFO] _run_thread — [STAGE] Alignment
+[2026-04-15 19:17:40] [   INFO] _run_thread —   Aligning front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:18:00] [   INFO] _run_thread —   Front aligned OK — rotation=90 score=0.5585162714645905
+[2026-04-15 19:18:00] [   INFO] _run_thread —   Front artifacts: crops=['name', 'address', 'id_number', 'birth_date'] photo=True
+[2026-04-15 19:18:00] [   INFO] _run_thread —   Aligning back: C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:18:25] [   INFO] _run_thread —   Back aligned OK — rotation=0 score=1.0953830986909596
+[2026-04-15 19:18:25] [   INFO] _run_thread —   Back artifacts: crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:18:25] [   INFO] _run_thread — [STAGE] OCR (subprocess)
+[2026-04-15 19:18:25] [   INFO] _run_thread —   OCR front_crops=['name', 'address', 'id_number', 'birth_date'] back_crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:18:26] [   INFO] _run_thread —   OCR subprocess started (pid=12080)
+[2026-04-15 19:18:31] [  DEBUG] _new_conn — Starting new HTTPS connection (1): huggingface.co:443
+[2026-04-15 19:18:32] [  DEBUG] _make_request — https://huggingface.co:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:18:32] [  DEBUG] _new_conn — Starting new HTTPS connection (1): aistudio.baidu.com:443
+[2026-04-15 19:18:34] [  DEBUG] _make_request — https://aistudio.baidu.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:18:34] [  DEBUG] _new_conn — Starting new HTTPS connection (1): modelscope.cn:443
+[2026-04-15 19:18:36] [  DEBUG] _make_request — https://modelscope.cn:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:18:36] [  DEBUG] _new_conn — Starting new HTTPS connection (1): paddle-model-ecology.bj.bcebos.com:443
+[2026-04-15 19:18:38] [  DEBUG] _make_request — https://paddle-model-ecology.bj.bcebos.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:18:38] [  DEBUG] wrapper — matplotlib data path: C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\matplotlib\mpl-data
+[2026-04-15 19:18:38] [  DEBUG] wrapper — CONFIGDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:18:38] [  DEBUG] <module> — interactive is False
+[2026-04-15 19:18:38] [  DEBUG] <module> — platform is win32
+[2026-04-15 19:18:38] [  DEBUG] wrapper — CACHEDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:18:38] [  DEBUG] _load_fontmanager — Using fontManager instance from C:\Users\ahmad\.matplotlib\fontlist-v390.json
+[2026-04-15 19:18:44] [   INFO] setup_tracer — === OCR TRACING STARTED ===
+[2026-04-15 19:18:44] [  DEBUG] trace — [extract_fields_from_crops] STARTED
+[2026-04-15 19:18:44] [  DEBUG] trace_var — [extract_fields_from_crops] front_crops_keys: len=4 | value=['name', 'address', 'id_number', 'birth_date']
+[2026-04-15 19:18:44] [  DEBUG] trace_var — [extract_fields_from_crops] back_crops_keys: len=7 | value=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:18:44] [  DEBUG] trace — [extract_fields_from_crops] Processing front side fields
+[2026-04-15 19:18:44] [  DEBUG] trace — [_best_lines_for_text] STARTED
+[2026-04-15 19:18:44] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_shape: len=3 | value=(419, 1777, 3)
+[2026-04-15 19:19:01] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_lines: len=5 | value=[{'text': '13', 'score': 0.2948991060256958, 'box': [[445, 64], [746, 61], [748, 319], [448, 322]]}, {'text': 'يويي', 'score': 0.3660505414009094, 'box': [[962, 66], [1088, 68], [1082, 419], [955, 419
+[2026-04-15 19:19:01] [  DEBUG] trace_var — [_best_lines_for_text] variant_0_score: 9.618333518505096
+[2026-04-15 19:19:01] [  DEBUG] trace — [_best_lines_for_text] New best variant 0
+[2026-04-15 19:19:01] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_shape: len=3 | value=(419, 1777, 3)
+[2026-04-15 19:19:08] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_lines: len=5 | value=[{'text': '13', 'score': 0.35701608657836914, 'box': [[444, 56], [749, 59], [747, 321], [441, 318]]}, {'text': 'مـييي', 'score': 0.3844403028488159, 'box': [[960, 64], [1089, 64], [1089, 419], [960, 4
+[2026-04-15 19:19:08] [  DEBUG] trace_var — [_best_lines_for_text] variant_1_score: 12.587291330099106
+[2026-04-15 19:19:08] [  DEBUG] trace — [_best_lines_for_text] New best variant 1
+[2026-04-15 19:19:08] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_shape: len=3 | value=(419, 1777, 3)
+[2026-04-15 19:19:15] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_lines: len=6 | value=[{'text': '0b', 'score': 0.6281289458274841, 'box': [[1334, 25], [1431, 23], [1434, 178], [1337, 180]]}, {'text': '13', 'score': 0.4215013384819031, 'box': [[443, 59], [748, 59], [748, 320], [443, 320
+[2026-04-15 19:19:15] [  DEBUG] trace_var — [_best_lines_for_text] variant_2_score: 13.24719899892807
+[2026-04-15 19:19:15] [  DEBUG] trace — [_best_lines_for_text] New best variant 2
+[2026-04-15 19:19:15] [  DEBUG] trace_var — [_best_lines_for_text] variant_3_shape: len=3 | value=(419, 1777, 3)
+[2026-04-15 19:19:29] [  ERROR] _run_thread —   OCR subprocess CRASHED with exit code 3221225477
+[2026-04-15 19:19:29] [   INFO] _run_thread — [STAGE] Face match
+[2026-04-15 19:19:29] [   INFO] _run_thread —   Running face match: selfie=C:/Users/ahmad/OneDrive/Desktop/IMG_20251201_150220_704.jpg
+[2026-04-15 19:19:42] [  DEBUG] __getitem__ — Creating converter from 3 to 5
+[2026-04-15 19:23:02] [   INFO] _run_thread —   Face match result: passed=False
+[2026-04-15 19:23:02] [   INFO] _run_thread — [STAGE] Liveness — SKIPPED
+[2026-04-15 19:23:02] [   INFO] _run_thread — Pipeline stages complete — building output
+[2026-04-15 19:23:02] [  DEBUG] _set_output — RunTab._set_output: 5113 chars
+[2026-04-15 19:23:02] [   INFO] _run_thread — Building visual sections
+[2026-04-15 19:23:02] [  DEBUG] _run_thread — Building feature match visuals
+[2026-04-15 19:23:02] [   INFO] _run_thread — Visual sections built: 3 sections
+[2026-04-15 19:23:02] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:23:02] [   INFO] show_results — VisualResultsTab.show_results: 3 sections
+[2026-04-15 19:23:02] [   INFO] _run_thread — PIPELINE RUN COMPLETE
+[2026-04-15 19:23:02] [  DEBUG] clear — VisualResultsTab.clear
+[2026-04-15 19:23:02] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:23:02] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(4096, 3072, 3) dtype=uint8
+[2026-04-15 19:23:02] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(4096, 3072, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1600, 1200, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1600, 1200, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(577, 935, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(577, 935, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1059, 868, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(419, 1777, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(346, 1763, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(474, 1509, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(308, 878, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(111, 444, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(109, 318, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(127, 653, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(121, 185, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(120, 203, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(119, 321, 3) dtype=uint8
+[2026-04-15 19:23:03] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(138, 956, 3) dtype=uint8
+[2026-04-15 19:24:25] [   INFO] _run_selected — CardDetectLabTab._run_selected
+[2026-04-15 19:24:25] [   INFO] _worker — CardDetectLabTab._worker: methods=['pipeline_fused']
+[2026-04-15 19:24:25] [  DEBUG] _worker —   Running method: pipeline_fused
+[2026-04-15 19:24:34] [  DEBUG] _worker —   pipeline_fused -> score=0.503
+[2026-04-15 19:24:34] [   INFO] _worker — CardDetectLabTab._worker: done, 1 results
+[2026-04-15 19:24:34] [   INFO] _show_results — CardDetectLabTab._show_results: 1 results
+[2026-04-15 19:24:34] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1500, 2000, 3) dtype=uint8
+[2026-04-15 19:24:52] [   INFO] _save — StagesTab._save
+[2026-04-15 19:24:52] [   INFO] save_admin_cfg — Saving admin config: {'feature_front': True, 'feature_back': False, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': False}
+[2026-04-15 19:24:59] [  DEBUG] _browse — RunTab._browse: key=front_image
+[2026-04-15 19:25:01] [   INFO] _browse — RunTab._browse: front_image = C:/Users/ahmad/OneDrive/Desktop/IMG_20260329_073342.jpg
+[2026-04-15 19:25:01] [   INFO] _run — RunTab._run: starting pipeline thread
+[2026-04-15 19:25:01] [  DEBUG] _set_output — RunTab._set_output: 0 chars
+[2026-04-15 19:25:01] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:25:01] [   INFO] _run_thread — PIPELINE RUN STARTED
+[2026-04-15 19:25:01] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:25:01] [  DEBUG] _run_thread — Importing arabic_ocr...
+[2026-04-15 19:25:01] [  DEBUG] _run_thread — Importing face_match_top4...
+[2026-04-15 19:25:01] [  DEBUG] _run_thread — Importing feature_pipeline...
+[2026-04-15 19:25:01] [  DEBUG] _run_thread — Importing liveness_gate...
+[2026-04-15 19:25:01] [  DEBUG] _run_thread — Importing template_fields...
+[2026-04-15 19:25:01] [   INFO] _run_thread — All imports OK
+[2026-04-15 19:25:01] [   INFO] _run_thread — Enabled stages: {'feature_front': True, 'feature_back': False, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': False}
+[2026-04-15 19:25:01] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:25:01] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:25:01] [   INFO] _run_thread — Inputs: selfie=C:/Users/ahmad/OneDrive/Desktop/IMG_20251201_150220_704.jpg  front=C:/Users/ahmad/OneDrive/Desktop/IMG_20260329_073342.jpg  back=C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:25:01] [   INFO] _run_thread — [STAGE] Feature validation
+[2026-04-15 19:25:01] [   INFO] _run_thread —   Running feature_front: C:/Users/ahmad/OneDrive/Desktop/IMG_20260329_073342.jpg
+[2026-04-15 19:25:04] [   INFO] _run_thread —   feature_front result: passed=True
+[2026-04-15 19:25:04] [   INFO] _run_thread — [STAGE] Alignment
+[2026-04-15 19:25:04] [   INFO] _run_thread —   Aligning front: C:/Users/ahmad/OneDrive/Desktop/IMG_20260329_073342.jpg
+[2026-04-15 19:25:14] [   INFO] _run_thread —   Front aligned OK — rotation=0 score=0.5032743112656062
+[2026-04-15 19:25:15] [   INFO] _run_thread —   Front artifacts: crops=['name', 'address', 'id_number', 'birth_date'] photo=True
+[2026-04-15 19:25:15] [   INFO] _run_thread —   Aligning back: C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:25:39] [   INFO] _run_thread —   Back aligned OK — rotation=0 score=1.0953830986909596
+[2026-04-15 19:25:39] [   INFO] _run_thread —   Back artifacts: crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:25:39] [   INFO] _run_thread — [STAGE] OCR (subprocess)
+[2026-04-15 19:25:39] [   INFO] _run_thread —   OCR front_crops=['name', 'address', 'id_number', 'birth_date'] back_crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:25:40] [   INFO] _run_thread —   OCR subprocess started (pid=4840)
+[2026-04-15 19:25:47] [  DEBUG] _new_conn — Starting new HTTPS connection (1): huggingface.co:443
+[2026-04-15 19:25:48] [  DEBUG] _make_request — https://huggingface.co:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:25:48] [  DEBUG] _new_conn — Starting new HTTPS connection (1): aistudio.baidu.com:443
+[2026-04-15 19:25:50] [  DEBUG] _make_request — https://aistudio.baidu.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:25:50] [  DEBUG] _new_conn — Starting new HTTPS connection (1): modelscope.cn:443
+[2026-04-15 19:25:53] [  DEBUG] _new_conn — Starting new HTTPS connection (1): paddle-model-ecology.bj.bcebos.com:443
+[2026-04-15 19:25:56] [  DEBUG] _make_request — https://paddle-model-ecology.bj.bcebos.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:25:57] [  DEBUG] wrapper — matplotlib data path: C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\matplotlib\mpl-data
+[2026-04-15 19:25:57] [  DEBUG] wrapper — CONFIGDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:25:57] [  DEBUG] <module> — interactive is False
+[2026-04-15 19:25:57] [  DEBUG] <module> — platform is win32
+[2026-04-15 19:25:57] [  DEBUG] wrapper — CACHEDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:25:57] [  DEBUG] _load_fontmanager — Using fontManager instance from C:\Users\ahmad\.matplotlib\fontlist-v390.json
+[2026-04-15 19:26:08] [  ERROR] _run_thread —   OCR returned error: Traceback (most recent call last):
+  File "C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\admin_ui.py", line 773, in _ocr_in_process
+    import arabic_ocr as ao
+  File "C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\arabic_ocr.py", line 13, in <module>
+    from paddleocr import PaddleOCR
+  File "C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\paddleocr\__init__.py", line 15, in <module>
+    from paddlex.inference.utils.benchmark import benchmark
+  F
+[2026-04-15 19:26:08] [   INFO] _run_thread — [STAGE] Face match — SKIPPED (enabled=False selfie=True front_art=True)
+[2026-04-15 19:26:08] [   INFO] _run_thread — [STAGE] Liveness — SKIPPED
+[2026-04-15 19:26:08] [   INFO] _run_thread — Pipeline stages complete — building output
+[2026-04-15 19:26:08] [  DEBUG] _set_output — RunTab._set_output: 7245 chars
+[2026-04-15 19:26:08] [   INFO] _run_thread — Building visual sections
+[2026-04-15 19:26:08] [  DEBUG] _run_thread — Building feature match visuals
+[2026-04-15 19:26:08] [   INFO] _run_thread — Visual sections built: 3 sections
+[2026-04-15 19:26:08] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:26:08] [   INFO] show_results — VisualResultsTab.show_results: 3 sections
+[2026-04-15 19:26:08] [   INFO] _run_thread — PIPELINE RUN COMPLETE
+[2026-04-15 19:26:08] [  DEBUG] clear — VisualResultsTab.clear
+[2026-04-15 19:26:08] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:26:08] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(3072, 4096, 3) dtype=uint8
+[2026-04-15 19:26:08] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(3072, 4096, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1600, 1200, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1600, 1200, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(577, 935, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(577, 935, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(998, 785, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(411, 1708, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(352, 1724, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(501, 1515, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(309, 820, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(111, 444, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(109, 318, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(127, 653, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(121, 185, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(120, 203, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(119, 321, 3) dtype=uint8
+[2026-04-15 19:26:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(138, 956, 3) dtype=uint8
+[2026-04-15 19:26:18] [  DEBUG] _browse — RunTab._browse: key=front_image
+[2026-04-15 19:26:25] [   INFO] _browse — RunTab._browse: front_image = C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:26:27] [   INFO] _run — RunTab._run: starting pipeline thread
+[2026-04-15 19:26:27] [  DEBUG] _set_output — RunTab._set_output: 0 chars
+[2026-04-15 19:26:27] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:26:27] [   INFO] _run_thread — PIPELINE RUN STARTED
+[2026-04-15 19:26:27] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:26:27] [  DEBUG] _run_thread — Importing arabic_ocr...
+[2026-04-15 19:26:27] [  DEBUG] _run_thread — Importing face_match_top4...
+[2026-04-15 19:26:27] [  DEBUG] _run_thread — Importing feature_pipeline...
+[2026-04-15 19:26:27] [  DEBUG] _run_thread — Importing liveness_gate...
+[2026-04-15 19:26:27] [  DEBUG] _run_thread — Importing template_fields...
+[2026-04-15 19:26:27] [   INFO] _run_thread — All imports OK
+[2026-04-15 19:26:27] [   INFO] _run_thread — Enabled stages: {'feature_front': True, 'feature_back': False, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': False}
+[2026-04-15 19:26:27] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:26:27] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:26:27] [   INFO] _run_thread — Inputs: selfie=C:/Users/ahmad/OneDrive/Desktop/IMG_20251201_150220_704.jpg  front=C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg  back=C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:26:27] [   INFO] _run_thread — [STAGE] Feature validation
+[2026-04-15 19:26:27] [   INFO] _run_thread —   Running feature_front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:26:28] [   INFO] _run_thread —   feature_front result: passed=True
+[2026-04-15 19:26:28] [   INFO] _run_thread — [STAGE] Alignment
+[2026-04-15 19:26:28] [   INFO] _run_thread —   Aligning front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:26:43] [   INFO] _run_thread —   Front aligned OK — rotation=90 score=0.5585162714645905
+[2026-04-15 19:26:43] [   INFO] _run_thread —   Front artifacts: crops=['name', 'address', 'id_number', 'birth_date'] photo=True
+[2026-04-15 19:26:43] [   INFO] _run_thread —   Aligning back: C:/Users/ahmad/OneDrive/Desktop/do or die/the-finall/back.jpeg
+[2026-04-15 19:27:00] [   INFO] _run_thread —   Back aligned OK — rotation=0 score=1.0953830986909596
+[2026-04-15 19:27:00] [   INFO] _run_thread —   Back artifacts: crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:27:00] [   INFO] _run_thread — [STAGE] OCR (subprocess)
+[2026-04-15 19:27:00] [   INFO] _run_thread —   OCR front_crops=['name', 'address', 'id_number', 'birth_date'] back_crops=['back_id_number', 'back_issue_date', 'profession', 'gender', 'religion', 'marital_status', 'expiry_date']
+[2026-04-15 19:27:01] [   INFO] _run_thread —   OCR subprocess started (pid=12776)
+[2026-04-15 19:27:05] [  DEBUG] _new_conn — Starting new HTTPS connection (1): huggingface.co:443
+[2026-04-15 19:27:06] [  DEBUG] _make_request — https://huggingface.co:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:27:06] [  DEBUG] _new_conn — Starting new HTTPS connection (1): aistudio.baidu.com:443
+[2026-04-15 19:27:08] [  DEBUG] _make_request — https://aistudio.baidu.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:27:08] [  DEBUG] _new_conn — Starting new HTTPS connection (1): modelscope.cn:443
+[2026-04-15 19:27:10] [  DEBUG] _make_request — https://modelscope.cn:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:27:10] [  DEBUG] _new_conn — Starting new HTTPS connection (1): paddle-model-ecology.bj.bcebos.com:443
+[2026-04-15 19:27:11] [  DEBUG] _make_request — https://paddle-model-ecology.bj.bcebos.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:27:11] [  DEBUG] wrapper — matplotlib data path: C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\matplotlib\mpl-data
+[2026-04-15 19:27:11] [  DEBUG] wrapper — CONFIGDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:27:11] [  DEBUG] <module> — interactive is False
+[2026-04-15 19:27:11] [  DEBUG] <module> — platform is win32
+[2026-04-15 19:27:11] [  DEBUG] wrapper — CACHEDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:27:11] [  DEBUG] _load_fontmanager — Using fontManager instance from C:\Users\ahmad\.matplotlib\fontlist-v390.json
+[2026-04-15 19:27:17] [  ERROR] _run_thread —   OCR subprocess CRASHED with exit code 3221225477
+[2026-04-15 19:27:17] [   INFO] _run_thread — [STAGE] Face match — SKIPPED (enabled=False selfie=True front_art=True)
+[2026-04-15 19:27:17] [   INFO] _run_thread — [STAGE] Liveness — SKIPPED
+[2026-04-15 19:27:17] [   INFO] _run_thread — Pipeline stages complete — building output
+[2026-04-15 19:27:17] [  DEBUG] _set_output — RunTab._set_output: 4094 chars
+[2026-04-15 19:27:17] [   INFO] _run_thread — Building visual sections
+[2026-04-15 19:27:17] [  DEBUG] _run_thread — Building feature match visuals
+[2026-04-15 19:27:17] [   INFO] _run_thread — Visual sections built: 3 sections
+[2026-04-15 19:27:17] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:27:17] [   INFO] show_results — VisualResultsTab.show_results: 3 sections
+[2026-04-15 19:27:17] [   INFO] _run_thread — PIPELINE RUN COMPLETE
+[2026-04-15 19:27:17] [  DEBUG] clear — VisualResultsTab.clear
+[2026-04-15 19:27:17] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:27:17] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(4096, 3072, 3) dtype=uint8
+[2026-04-15 19:27:17] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(4096, 3072, 3) dtype=uint8
+[2026-04-15 19:27:17] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1600, 1200, 3) dtype=uint8
+[2026-04-15 19:27:17] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1600, 1200, 3) dtype=uint8
+[2026-04-15 19:27:17] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:27:17] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:27:17] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(577, 935, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(577, 935, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1059, 868, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(419, 1777, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(346, 1763, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(474, 1509, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(308, 878, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(111, 444, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(109, 318, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(127, 653, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(121, 185, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(120, 203, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(119, 321, 3) dtype=uint8
+[2026-04-15 19:27:18] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(138, 956, 3) dtype=uint8
+[2026-04-15 19:44:09] [   INFO] <module> — ============================================================
+[2026-04-15 19:44:09] [   INFO] <module> — ADMIN UI STARTING
+[2026-04-15 19:44:09] [   INFO] <module> — ============================================================
+[2026-04-15 19:44:09] [   INFO] <module> — Directories ensured
+[2026-04-15 19:44:09] [   INFO] __init__ — AdminApp.__init__
+[2026-04-15 19:44:09] [   INFO] __init__ — TemplateTab.__init__
+[2026-04-15 19:44:09] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:44:09] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:44:09] [   INFO] _load_template — TemplateTab._load_template: side=front path=C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:44:09] [  DEBUG] load_pil — load_pil: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:44:09] [  DEBUG] load_pil — load_pil OK: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png shape=(584, 928, 3)
+[2026-04-15 19:44:09] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:44:09] [   INFO] _load_template — Template loaded OK: C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\templates\front_template.png
+[2026-04-15 19:44:09] [  DEBUG] _refresh_roi_panel — TemplateTab._refresh_roi_panel: side=front rois=4
+[2026-04-15 19:44:09] [  DEBUG] fit_image — fit_image: 928x584 -> 820x516 (scale=0.884)
+[2026-04-15 19:44:09] [   INFO] __init__ — FeaturesTab.__init__
+[2026-04-15 19:44:09] [  DEBUG] _refresh — FeaturesTab._refresh: dir=C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\features\front
+[2026-04-15 19:44:09] [  DEBUG] _refresh — FeaturesTab._refresh: found 1 images
+[2026-04-15 19:44:09] [   INFO] __init__ — StagesTab.__init__
+[2026-04-15 19:44:09] [  DEBUG] load_admin_cfg — Loading admin config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\admin_config.json
+[2026-04-15 19:44:09] [   INFO] load_admin_cfg — Admin config loaded — stages: {'feature_front': True, 'feature_back': False, 'alignment': True, 'ocr': True, 'liveness': False, 'face_match': False}
+[2026-04-15 19:44:09] [   INFO] __init__ — VisualResultsTab.__init__
+[2026-04-15 19:44:09] [   INFO] __init__ — RunTab.__init__
+[2026-04-15 19:44:09] [   INFO] __init__ — CardDetectLabTab.__init__
+[2026-04-15 19:44:09] [   INFO] __init__ — AdminApp.__init__ complete
+[2026-04-15 19:44:09] [   INFO] <module> — Entering mainloop
+[2026-04-15 19:44:20] [   INFO] _save — StagesTab._save
+[2026-04-15 19:44:20] [   INFO] save_admin_cfg — Saving admin config: {'feature_front': True, 'feature_back': False, 'alignment': True, 'ocr': False, 'liveness': False, 'face_match': False}
+[2026-04-15 19:44:23] [  DEBUG] _browse — RunTab._browse: key=front_image
+[2026-04-15 19:44:26] [   INFO] _browse — RunTab._browse: front_image = C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:44:26] [   INFO] _run — RunTab._run: starting pipeline thread
+[2026-04-15 19:44:26] [  DEBUG] _set_output — RunTab._set_output: 0 chars
+[2026-04-15 19:44:26] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:44:26] [   INFO] _run_thread — PIPELINE RUN STARTED
+[2026-04-15 19:44:26] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:44:26] [  DEBUG] _run_thread — Importing arabic_ocr...
+[2026-04-15 19:44:30] [  DEBUG] _new_conn — Starting new HTTPS connection (1): huggingface.co:443
+[2026-04-15 19:44:30] [  DEBUG] _make_request — https://huggingface.co:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:44:30] [  DEBUG] _new_conn — Starting new HTTPS connection (1): aistudio.baidu.com:443
+[2026-04-15 19:44:32] [  DEBUG] _make_request — https://aistudio.baidu.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:44:32] [  DEBUG] _new_conn — Starting new HTTPS connection (1): modelscope.cn:443
+[2026-04-15 19:44:34] [  DEBUG] _new_conn — Starting new HTTPS connection (1): paddle-model-ecology.bj.bcebos.com:443
+[2026-04-15 19:44:36] [  DEBUG] _make_request — https://paddle-model-ecology.bj.bcebos.com:443 "HEAD / HTTP/1.1" 200 0
+[2026-04-15 19:44:36] [  DEBUG] wrapper — matplotlib data path: C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\matplotlib\mpl-data
+[2026-04-15 19:44:36] [  DEBUG] wrapper — CONFIGDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:44:36] [  DEBUG] <module> — interactive is False
+[2026-04-15 19:44:36] [  DEBUG] <module> — platform is win32
+[2026-04-15 19:44:36] [  DEBUG] wrapper — CACHEDIR=C:\Users\ahmad\.matplotlib
+[2026-04-15 19:44:36] [  DEBUG] _load_fontmanager — Using fontManager instance from C:\Users\ahmad\.matplotlib\fontlist-v390.json
+[2026-04-15 19:44:40] [  DEBUG] _run_thread — Importing face_match_top4...
+[2026-04-15 19:44:43] [  DEBUG] <module> — Falling back to TensorFlow client; we recommended you install the Cloud TPU client directly with pip install cloud-tpu-client.
+[2026-04-15 19:44:44] [  DEBUG] <module> — Creating converter from 7 to 5
+[2026-04-15 19:44:44] [  DEBUG] <module> — Creating converter from 5 to 7
+[2026-04-15 19:44:44] [  DEBUG] <module> — Creating converter from 7 to 5
+[2026-04-15 19:44:44] [  DEBUG] <module> — Creating converter from 5 to 7
+[2026-04-15 19:44:49] [WARNING] _tfmw_add_deprecation_warning — From C:\Users\ahmad\AppData\Local\Programs\Python\Python311\Lib\site-packages\tf_keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+[2026-04-15 19:44:51] [  DEBUG] _run_thread — Importing feature_pipeline...
+[2026-04-15 19:44:51] [  DEBUG] _run_thread — Importing liveness_gate...
+[2026-04-15 19:44:51] [  DEBUG] _run_thread — Importing template_fields...
+[2026-04-15 19:44:51] [   INFO] _run_thread — All imports OK
+[2026-04-15 19:44:51] [   INFO] _run_thread — Enabled stages: {'feature_front': True, 'feature_back': False, 'alignment': True, 'ocr': False, 'liveness': False, 'face_match': False}
+[2026-04-15 19:44:51] [  DEBUG] load_config — Loading config from C:\Users\ahmad\OneDrive\Desktop\New folder (2)\the-finall\id_template_config.json
+[2026-04-15 19:44:51] [   INFO] load_config — Config loaded — 2 sides
+[2026-04-15 19:44:51] [   INFO] _run_thread — Inputs: selfie=None  front=C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg  back=None
+[2026-04-15 19:44:51] [   INFO] _run_thread — [STAGE] Feature validation
+[2026-04-15 19:44:51] [   INFO] _run_thread —   Running feature_front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:44:52] [   INFO] _run_thread —   feature_front result: passed=True
+[2026-04-15 19:44:52] [   INFO] _run_thread — [STAGE] Alignment
+[2026-04-15 19:44:52] [   INFO] _run_thread —   Aligning front: C:/Users/ahmad/OneDrive/Desktop/New folder (2)/the-finall/test/17729933921664490572148154777713.jpg
+[2026-04-15 19:45:04] [   INFO] _run_thread —   Front aligned OK — rotation=90 score=0.5585162714645905
+[2026-04-15 19:45:05] [   INFO] _run_thread —   Front artifacts: crops=['name', 'address', 'id_number', 'birth_date'] photo=True
+[2026-04-15 19:45:05] [   INFO] _run_thread — [STAGE] OCR — SKIPPED
+[2026-04-15 19:45:05] [   INFO] _run_thread — [STAGE] Face match — SKIPPED (enabled=False selfie=False front_art=True)
+[2026-04-15 19:45:05] [   INFO] _run_thread — [STAGE] Liveness — SKIPPED
+[2026-04-15 19:45:05] [   INFO] _run_thread — Pipeline stages complete — building output
+[2026-04-15 19:45:05] [  DEBUG] _set_output — RunTab._set_output: 2312 chars
+[2026-04-15 19:45:05] [   INFO] _run_thread — Building visual sections
+[2026-04-15 19:45:05] [  DEBUG] _run_thread — Building feature match visuals
+[2026-04-15 19:45:05] [   INFO] _run_thread — Visual sections built: 3 sections
+[2026-04-15 19:45:05] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:45:05] [   INFO] show_results — VisualResultsTab.show_results: 3 sections
+[2026-04-15 19:45:05] [   INFO] _run_thread — PIPELINE RUN COMPLETE
+[2026-04-15 19:45:05] [  DEBUG] clear — VisualResultsTab.clear
+[2026-04-15 19:45:05] [   INFO] _run_thread — ============================================================
+[2026-04-15 19:45:05] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(4096, 3072, 3) dtype=uint8
+[2026-04-15 19:45:05] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(4096, 3072, 3) dtype=uint8
+[2026-04-15 19:45:05] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:45:05] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(584, 928, 3) dtype=uint8
+[2026-04-15 19:45:05] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(1059, 868, 3) dtype=uint8
+[2026-04-15 19:45:05] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(419, 1777, 3) dtype=uint8
+[2026-04-15 19:45:05] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(346, 1763, 3) dtype=uint8
+[2026-04-15 19:45:05] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(474, 1509, 3) dtype=uint8
+[2026-04-15 19:45:05] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(308, 878, 3) dtype=uint8
+[2026-04-15 19:45:27] [   INFO] _run_selected — CardDetectLabTab._run_selected
+[2026-04-15 19:45:27] [   INFO] _worker — CardDetectLabTab._worker: methods=['pipeline_fused']
+[2026-04-15 19:45:27] [  DEBUG] _worker —   Running method: pipeline_fused
+[2026-04-15 19:45:33] [  DEBUG] _worker —   pipeline_fused -> score=0.559
+[2026-04-15 19:45:33] [   INFO] _worker — CardDetectLabTab._worker: done, 1 results
+[2026-04-15 19:45:33] [   INFO] _show_results — CardDetectLabTab._show_results: 1 results
+[2026-04-15 19:45:33] [  DEBUG] cv2_to_pil — cv2_to_pil: shape=(2000, 1500, 3) dtype=uint8
+[2026-04-15 19:46:21] [   INFO] destroy — AdminApp.destroy
+[2026-04-15 19:46:21] [   INFO] <module> — ADMIN UI EXITED
