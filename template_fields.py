@@ -11,7 +11,16 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp", ".jfif"
 
 def read_image(path: str | Path) -> np.ndarray:
     path = Path(path)
-    img = cv2.imread(str(path), cv2.IMREAD_COLOR)
+    img = None
+    if path.exists():
+        try:
+            data = np.fromfile(str(path), dtype=np.uint8)
+            if data.size:
+                img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        except Exception:
+            img = None
+    if img is None:
+        img = cv2.imread(str(path), cv2.IMREAD_COLOR)
     if img is None:
         raise ValueError(f"Could not read image: {path}")
     return img
@@ -47,9 +56,9 @@ def crop_norm_box(img: np.ndarray, box, pad_px: int = 0) -> np.ndarray:
     return img[y1:y2, x1:x2].copy()
 
 
-def rotate_image(image: np.ndarray, angle: int) -> np.ndarray:
+def _rotation_matrix_for_image(image: np.ndarray, angle: int) -> Optional[np.ndarray]:
     if angle == 0:
-        return image.copy()
+        return None
     if angle not in {90, 180, 270}:
         raise ValueError(f"Unsupported angle: {angle}")
     h, w = image.shape[:2]
@@ -57,7 +66,16 @@ def rotate_image(image: np.ndarray, angle: int) -> np.ndarray:
     scale = 1.0
     if angle in {90, 270}:
         scale = min(float(w) / max(float(h), 1.0), float(h) / max(float(w), 1.0))
-    matrix = cv2.getRotationMatrix2D(center, -float(angle), scale)
+    return cv2.getRotationMatrix2D(center, -float(angle), scale)
+
+
+def rotate_image(image: np.ndarray, angle: int) -> np.ndarray:
+    if angle == 0:
+        return image.copy()
+    if angle not in {90, 180, 270}:
+        raise ValueError(f"Unsupported angle: {angle}")
+    h, w = image.shape[:2]
+    matrix = _rotation_matrix_for_image(image, angle)
     return cv2.warpAffine(image, matrix, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
 
 
@@ -166,6 +184,98 @@ def _candidate_rotations_for_subject(subject_h: int, subject_w: int) -> Tuple[in
     return (90, 270)
 
 
+def _fallback_rotations_for_subject(subject_h: int, subject_w: int) -> Tuple[int, ...]:
+    preferred = set(_candidate_rotations_for_subject(subject_h, subject_w))
+    return tuple(rotation for rotation in (0, 90, 180, 270) if rotation not in preferred)
+
+
+def _map_rotated_points_to_source(points: np.ndarray, source_bgr: np.ndarray, rotation: int) -> np.ndarray:
+    mapped = np.asarray(points, dtype="float32").reshape(-1, 2)
+    if rotation != 0:
+        matrix = _rotation_matrix_for_image(source_bgr, rotation)
+        inverse_matrix = cv2.invertAffineTransform(matrix)
+        mapped = cv2.transform(mapped.reshape(-1, 1, 2), inverse_matrix).reshape(-1, 2)
+    h, w = source_bgr.shape[:2]
+    mapped[:, 0] = np.clip(mapped[:, 0], 0, max(w - 1, 0))
+    mapped[:, 1] = np.clip(mapped[:, 1], 0, max(h - 1, 0))
+    return order_points(mapped.astype("float32"))
+
+
+def _build_alignment_candidate(
+    subject_bgr: np.ndarray,
+    template_bgr: np.ndarray,
+    template_corners: np.ndarray,
+    rotation: int,
+) -> Dict:
+    rotated_subject = rotate_image(subject_bgr, rotation)
+    contour, contour_score = _segment_card_contour(rotated_subject)
+    candidate = {
+        "rotation": int(rotation),
+        "valid": False,
+        "inliers": 0,
+        "inlier_ratio": 0.0,
+        "good_matches": 0,
+        "score": float(contour_score),
+        "orientation_score": 0.0,
+    }
+    if contour is None:
+        return candidate
+
+    template_h, template_w = template_bgr.shape[:2]
+    rect = order_points(contour.reshape(4, 2).astype("float32"))
+    source_rect = _map_rotated_points_to_source(rect, subject_bgr, rotation)
+    source_to_template = cv2.getPerspectiveTransform(source_rect, template_corners)
+    template_to_source = cv2.getPerspectiveTransform(template_corners, source_rect)
+    aligned = cv2.warpPerspective(subject_bgr, source_to_template, (template_w, template_h))
+    orientation_score = _score_alignment_candidate(aligned, template_bgr)
+    candidate.update(
+        {
+            "valid": True,
+            "inliers": 4,
+            "inlier_ratio": 1.0,
+            "good_matches": 4,
+            "source_corners": source_rect,
+            "source_to_template": source_to_template,
+            "template_to_source": template_to_source,
+            "aligned": aligned,
+            "orientation_score": float(orientation_score),
+        }
+    )
+    return candidate
+
+
+def _build_full_image_candidate(subject_bgr: np.ndarray, template_bgr: np.ndarray, template_corners: np.ndarray) -> Optional[Dict]:
+    template_h, template_w = template_bgr.shape[:2]
+    source_h, source_w = subject_bgr.shape[:2]
+    if source_w <= 1 or source_h <= 1:
+        return None
+
+    card_ratio = 85.6 / 54.0
+    source_ratio = float(source_w) / max(float(source_h), 1.0)
+    ratio_error = abs(source_ratio - card_ratio) / card_ratio
+    if ratio_error > 0.12:
+        return None
+
+    source_rect = np.array([[0, 0], [source_w - 1, 0], [source_w - 1, source_h - 1], [0, source_h - 1]], dtype="float32")
+    source_to_template = cv2.getPerspectiveTransform(source_rect, template_corners)
+    template_to_source = cv2.getPerspectiveTransform(template_corners, source_rect)
+    aligned = cv2.warpPerspective(subject_bgr, source_to_template, (template_w, template_h))
+    orientation_score = _score_alignment_candidate(aligned, template_bgr)
+    return {
+        "rotation": 0,
+        "valid": True,
+        "inliers": 4,
+        "inlier_ratio": 1.0,
+        "good_matches": 4,
+        "score": float(1.0 - ratio_error),
+        "source_corners": source_rect,
+        "source_to_template": source_to_template,
+        "template_to_source": template_to_source,
+        "aligned": aligned,
+        "orientation_score": float(orientation_score),
+    }
+
+
 def align_card_to_template(subject_image: str | Path, template_image: str | Path, return_candidates: bool = False):
     template_bgr = read_image(template_image)
     subject_bgr = read_image(subject_image)
@@ -179,42 +289,23 @@ def align_card_to_template(subject_image: str | Path, template_image: str | Path
     candidates = []
     best_candidate = None
     for rotation in _candidate_rotations_for_subject(subject_h, subject_w):
-        rotated_subject = rotate_image(subject_bgr, rotation)
-        contour, contour_score = _segment_card_contour(rotated_subject)
-        candidate = {
-            "rotation": int(rotation),
-            "valid": False,
-            "inliers": 0,
-            "inlier_ratio": 0.0,
-            "good_matches": 0,
-            "score": float(contour_score),
-            "orientation_score": 0.0,
-        }
-        if contour is None:
-            candidates.append(candidate)
-            continue
-
-        rect = order_points(contour.reshape(4, 2).astype("float32"))
-        source_to_template = cv2.getPerspectiveTransform(rect, template_corners)
-        template_to_source = cv2.getPerspectiveTransform(template_corners, rect)
-        aligned = cv2.warpPerspective(rotated_subject, source_to_template, (template_w, template_h))
-        orientation_score = _score_alignment_candidate(aligned, template_bgr)
-        candidate.update(
-            {
-                "valid": True,
-                "inliers": 4,
-                "inlier_ratio": 1.0,
-                "good_matches": 4,
-                "source_corners": rect,
-                "source_to_template": source_to_template,
-                "template_to_source": template_to_source,
-                "aligned": aligned,
-                "orientation_score": float(orientation_score),
-            }
-        )
+        candidate = _build_alignment_candidate(subject_bgr, template_bgr, template_corners, rotation)
         candidates.append(candidate)
-        if best_candidate is None or candidate["orientation_score"] > best_candidate["orientation_score"]:
+        if candidate["valid"] and (best_candidate is None or candidate["orientation_score"] > best_candidate["orientation_score"]):
             best_candidate = candidate
+
+    if best_candidate is None:
+        for rotation in _fallback_rotations_for_subject(subject_h, subject_w):
+            candidate = _build_alignment_candidate(subject_bgr, template_bgr, template_corners, rotation)
+            candidates.append(candidate)
+            if candidate["valid"] and (best_candidate is None or candidate["orientation_score"] > best_candidate["orientation_score"]):
+                best_candidate = candidate
+
+    full_image_candidate = _build_full_image_candidate(subject_bgr, template_bgr, template_corners)
+    if full_image_candidate is not None:
+        candidates.append(full_image_candidate)
+        if best_candidate is None or float(best_candidate.get("score", 0.0)) < 0.10:
+            best_candidate = full_image_candidate
 
     if best_candidate is None:
         aligned = cv2.resize(subject_bgr, (template_w, template_h))
@@ -428,8 +519,6 @@ def extract_side_artifacts(
         source_bgr = subject_image.copy()
     elif subject_image is not None:
         source_bgr = read_image(subject_image)
-    if source_bgr is not None and align_info:
-        source_bgr = rotate_image(source_bgr, int(align_info.get("rotation", 0)))
 
     template_size = None
     template_to_source_matrix = None
@@ -484,20 +573,33 @@ def extract_side_artifacts(
     return out
 
 
+def write_image(path: str | Path, image: np.ndarray) -> bool:
+    path = Path(path)
+    suffix = path.suffix or ".png"
+    success, buffer = cv2.imencode(suffix, image)
+    if not success:
+        return False
+    try:
+        buffer.tofile(str(path))
+        return True
+    except Exception:
+        return False
+
+
 def save_debug_artifacts(debug_dir: str | Path, prefix: str, artifacts: Dict):
     debug_dir = Path(debug_dir)
     debug_dir.mkdir(parents=True, exist_ok=True)
 
     if artifacts.get("aligned") is not None:
-        cv2.imwrite(str(debug_dir / f"{prefix}_aligned.png"), artifacts["aligned"])
+        write_image(debug_dir / f"{prefix}_aligned.png", artifacts["aligned"])
     if artifacts.get("cleaned") is not None:
-        cv2.imwrite(str(debug_dir / f"{prefix}_cleaned.png"), artifacts["cleaned"])
+        write_image(debug_dir / f"{prefix}_cleaned.png", artifacts["cleaned"])
     if artifacts.get("photo") is not None:
-        cv2.imwrite(str(debug_dir / f"{prefix}_photo.png"), artifacts["photo"])
+        write_image(debug_dir / f"{prefix}_photo.png", artifacts["photo"])
     if artifacts.get("outline") is not None:
-        cv2.imwrite(str(debug_dir / f"{prefix}_outline.png"), artifacts["outline"])
+        write_image(debug_dir / f"{prefix}_outline.png", artifacts["outline"])
     if artifacts.get("projection") is not None:
-        cv2.imwrite(str(debug_dir / f"{prefix}_projection.png"), artifacts["projection"])
+        write_image(debug_dir / f"{prefix}_projection.png", artifacts["projection"])
 
     for name, crop in artifacts.get("crops", {}).items():
-        cv2.imwrite(str(debug_dir / f"{prefix}_{name}.png"), crop)
+        write_image(debug_dir / f"{prefix}_{name}.png", crop)

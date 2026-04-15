@@ -54,10 +54,15 @@ def list_images(folder: Path) -> List[Path]:
     return sorted([p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_EXTS])
 
 
-def read_image(path: Path) -> np.ndarray:
-    img = cv2.imread(str(path), cv2.IMREAD_COLOR)
+def read_image(path: Path, max_side: int = 2048) -> np.ndarray:
+    raw = np.fromfile(str(path), dtype=np.uint8)
+    img = cv2.imdecode(raw, cv2.IMREAD_COLOR)
     if img is None:
         raise ValueError(f"Could not read image: {path}")
+    h, w = img.shape[:2]
+    if max_side and max(h, w) > max_side:
+        scale = max_side / max(h, w)
+        img = cv2.resize(img, (max(1, int(w * scale)), max(1, int(h * scale))), interpolation=cv2.INTER_AREA)
     return img
 
 
@@ -166,6 +171,8 @@ def score_detection(
 
 
 def found_from_metrics(inliers: int, inlier_ratio: float, score: float) -> bool:
+    if inlier_ratio >= 0.65 and inliers >= 4 and score >= 0.30:
+        return True
     return bool(inliers >= 8 and inlier_ratio >= 0.20 and score >= 0.35)
 
 

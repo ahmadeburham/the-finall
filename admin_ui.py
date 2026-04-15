@@ -14,6 +14,7 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 import cv2
 from PIL import Image, ImageDraw, ImageTk
+import template_fields as tf
 
 HERE = Path(__file__).resolve().parent
 CONFIG_PATH    = HERE / "id_template_config.json"
@@ -72,7 +73,7 @@ def cv2_to_pil(bgr):
 
 
 def load_pil(path: Path) -> Image.Image:
-    img = cv2.imread(str(path))
+    img = tf.read_image(path)
     if img is None:
         raise FileNotFoundError(f"Cannot read {path}")
     return cv2_to_pil(img)
@@ -488,8 +489,7 @@ class TemplateTab(tk.Frame):
 
         e.bind("<Return>", ok)
         tk.Button(dlg, text="OK", command=ok,
-                  bg="#3b82f6", fg="white", relief="flat",
-                  padx=12).pack(pady=(4, 12))
+                  bg="#3b82f6", fg="white", relief="flat", padx=12).pack(pady=(4, 12))
         self.wait_window(dlg)
         return result[0] if result else ""
 
@@ -942,14 +942,14 @@ class RunTab(tk.Frame):
                 src_path = front_img if side_key == "front" else back_img
                 feat_dir  = FEATURES_DIR / side_key
                 if src_path and feat_dir.exists():
-                    subject_bgr = cv2.imread(src_path)
+                    subject_bgr = tf.read_image(src_path)
                     if subject_bgr is not None:
                         for log in (logs if isinstance(logs, list) else []):
                             feat_path = None
                             if isinstance(log, dict):
                                 feat_path = log.get("feature_path") or ""
                             if feat_path and Path(feat_path).exists():
-                                feat_bgr = cv2.imread(feat_path)
+                                feat_bgr = tf.read_image(feat_path)
                                 if feat_bgr is not None:
                                     vis = _draw_match_vis(
                                         feat_bgr, subject_bgr,
