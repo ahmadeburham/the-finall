@@ -666,6 +666,14 @@ def extract_side_artifacts(
     elif subject_image is not None:
         source_bgr = read_image(subject_image)
 
+    # card_corners_px and template_to_source_matrix live in rotated-image
+    # space, so source_bgr must be rotated to match before drawing overlays
+    # or doing perspective crops.
+    if source_bgr is not None and align_info:
+        rot = int(align_info.get("rotation", 0))
+        if rot != 0:
+            source_bgr = rotate_image(source_bgr, rot)
+
     template_size = None
     template_to_source_matrix = None
     if align_info and align_info.get("card_detected") and align_info.get("template_size") and align_info.get("template_to_source_matrix"):
